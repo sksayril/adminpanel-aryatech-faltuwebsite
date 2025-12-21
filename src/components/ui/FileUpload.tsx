@@ -1,4 +1,4 @@
-import { useRef, ChangeEvent, ReactNode } from 'react';
+import { useRef, ChangeEvent } from 'react';
 import clsx from 'clsx';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { showToast } from '@/utils/toast';

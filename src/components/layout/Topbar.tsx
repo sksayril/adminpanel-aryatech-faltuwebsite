@@ -1,5 +1,4 @@
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/Button';
 import { ArrowRightOnRectangleIcon, UserIcon } from '@heroicons/react/24/outline';
 
 interface TopbarProps {

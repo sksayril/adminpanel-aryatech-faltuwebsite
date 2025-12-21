@@ -8,7 +8,6 @@ import {
   ArrowsPointingInIcon,
   Cog6ToothIcon,
 } from '@heroicons/react/24/solid';
-import { Button } from '@/components/ui/Button';
 
 interface VideoQuality {
   Quality: string;
@@ -43,7 +42,7 @@ export const CustomVideoPlayer = ({ videos, title, poster, subtitles }: CustomVi
   const [connectionSpeed, setConnectionSpeed] = useState<number>(0);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sort videos by quality (highest first)
   const sortedVideos = [...videos].sort((a, b) => {

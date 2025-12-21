@@ -38,8 +38,8 @@ export const CreateMovie = () => {
   const navigate = useNavigate();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [poster, setPoster] = useState<File | null>(null);
-  const [videos, setVideos] = useState<Array<{ file: File; quality: string }>>([]);
-  const [subtitles, setSubtitles] = useState<Array<{ file: File; language: string; languageCode: string }>>([]);
+  const [videos] = useState<Array<{ file: File; quality: string }>>([]);
+  const [subtitles] = useState<Array<{ file: File; language: string; languageCode: string }>>([]);
   const [blockedCountries] = useState<string[]>([]);
   const [genre] = useState<string[]>([]);
   const [cast] = useState<string[]>([]);
@@ -90,7 +90,9 @@ export const CreateMovie = () => {
       thumbnail: thumbnail || undefined,
       poster: poster || undefined,
       video: videos.length > 0 ? videos[0]?.file : undefined,
-      subtitles: subtitles.length > 0 ? subtitles : undefined,
+      subtitle: subtitles.length > 0 ? subtitles[0]?.file : undefined,
+      subtitleLanguages: subtitles.length > 0 ? subtitles.map(s => s.language) : undefined,
+      subtitleLanguageCodes: subtitles.length > 0 ? subtitles.map(s => s.languageCode) : undefined,
     };
 
     createMutation.mutate(formData);
