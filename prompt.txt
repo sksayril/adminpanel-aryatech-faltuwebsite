@@ -1,0 +1,1746 @@
+You are a senior frontend architect and product engineer.
+
+Build a COMPLETE, PRODUCTION-READY ADMIN PANEL using React (Vite + React 18) for a VIDEO STREAMING PLATFORM.
+
+This admin panel MUST be fully API-driven and strictly follow the API documentation provided below.
+
+-----------------------------------
+🧱 TECH STACK (MANDATORY)
+-----------------------------------
+- React 18 (Vite)
+- React Router DOM v6
+- Axios
+- React Hook Form + Zod
+- TanStack React Query
+- Tailwind CSS + Headless UI
+- Zustand (auth + global state)
+- Recharts (analytics)
+- JWT-based auth (Bearer token)
+- Modular & scalable folder structure
+
+-----------------------------------
+🔐 AUTH & SECURITY
+-----------------------------------
+- Admin login page
+- JWT token stored securely (localStorage)
+- Axios interceptor to attach:
+  Authorization: Bearer <admin-token>
+- Protected routes (Admin only)
+- Auto logout on 401 / 403
+
+-----------------------------------
+📁 REQUIRED FOLDER STRUCTURE
+-----------------------------------
+src/
+ ┣ api/
+ ┃ ┣ axios.ts
+ ┃ ┣ auth.api.ts
+ ┃ ┣ ads.api.ts
+ ┃ ┣ movies.api.ts
+ ┃ ┣ categories.api.ts
+ ┃ ┣ channels.api.ts
+ ┃ ┣ subcategories.api.ts
+ ┃ ┣ seo.api.ts
+ ┃ ┗ referrals.api.ts
+ ┣ components/
+ ┃ ┣ layout/
+ ┃ ┃ ┣ AdminLayout.tsx
+ ┃ ┃ ┣ Sidebar.tsx
+ ┃ ┃ ┣ Topbar.tsx
+ ┃ ┃ ┗ Breadcrumbs.tsx
+ ┃ ┣ ui/
+ ┃ ┃ ┣ Button.tsx
+ ┃ ┃ ┣ Input.tsx
+ ┃ ┃ ┣ Select.tsx
+ ┃ ┃ ┣ Modal.tsx
+ ┃ ┃ ┣ Switch.tsx
+ ┃ ┃ ┗ FileUpload.tsx
+ ┣ pages/
+ ┃ ┣ auth/
+ ┃ ┃ ┗ Login.tsx
+ ┃ ┣ dashboard/
+ ┃ ┃ ┗ Dashboard.tsx
+ ┃ ┣ ads/
+ ┃ ┃ ┣ AdsList.tsx
+ ┃ ┃ ┣ CreateAd.tsx
+ ┃ ┃ ┣ EditAd.tsx
+ ┃ ┃ ┗ AdAnalytics.tsx
+ ┃ ┣ movies/
+ ┃ ┃ ┣ MoviesList.tsx
+ ┃ ┃ ┣ CreateMovie.tsx
+ ┃ ┃ ┣ EditMovie.tsx
+ ┃ ┃ ┣ MovieDetails.tsx
+ ┃ ┃ ┣ UploadVideo.tsx
+ ┃ ┃ ┣ UploadSubtitle.tsx
+ ┃ ┃ ┗ DMCA.tsx
+ ┃ ┣ categories/
+ ┃ ┣ seo/
+ ┃ ┣ referrals/
+ ┣ routes/
+ ┃ ┗ AppRoutes.tsx
+ ┣ store/
+ ┃ ┗ auth.store.ts
+ ┣ hooks/
+ ┃ ┗ useAuth.ts
+ ┣ utils/
+ ┃ ┗ constants.ts
+ ┣ App.tsx
+ ┗ main.tsx
+
+-----------------------------------
+🧭 SIDEBAR (FULLY FUNCTIONAL)
+-----------------------------------
+Sidebar MUST support collapse, active state, icons, and nested routes.
+
+SIDEBAR MENU STRUCTURE:
+
+📊 Dashboard
+
+🎯 Ads Management (MOST IMPORTANT)
+ ├ Pre-Roll Ads
+ ├ Mid-Roll Ads
+ ├ Banner Ads (Top / Bottom)
+ ├ Native Ads
+ ├ Popup / Interstitial Ads
+ ├ Create Ad
+ ├ Ad Analytics
+
+🎬 Movie Management
+ ├ All Movies
+ ├ Upload Movie
+ ├ Upload Video Quality
+ ├ Upload Subtitles
+ ├ Trending Movies
+ ├ Featured Movies
+
+📁 Categories
+ ├ Categories
+ ├ Sub Categories
+ ├ Channels
+
+🔍 SEO & Traffic
+ ├ Movie SEO Editor
+ ├ Sitemap Generator
+ ├ SEO Analytics
+ ├ Google Discover Optimization
+ ├ Google Analytics Overview
+
+⚠ Copyright & Safety
+ ├ DMCA Takedown
+ ├ Country Block
+ ├ Age Restriction
+ ├ Disable Content
+
+🎁 Promotion & Growth
+ ├ Referral List
+ ├ Referral Stats
+ ├ Brand Ads
+ ├ App Install Promotion
+ ├ In-site Banner Promotion
+
+-----------------------------------
+🎯 ADS MANAGEMENT (CORE FEATURE)
+-----------------------------------
+Implement UI + logic for:
+
+- Create Ad (multipart/form-data)
+- Edit Ad
+- Delete Ad
+- Toggle Ad Status
+- Filter by:
+  - Type
+  - Active / Inactive
+- Ad Types:
+  pre-roll, mid-roll, banner-top, banner-bottom,
+  native, popup, interstitial
+- Ad analytics:
+  impressions, clicks, CTR
+
+-----------------------------------
+🎬 MOVIE MANAGEMENT
+-----------------------------------
+- Create Movie (multipart/form-data)
+- Upload:
+  - Thumbnail
+  - Poster
+  - Multiple Videos (480p / 720p / 1080p)
+  - Multiple Subtitles
+- Toggle:
+  - Trending
+  - Featured
+- Delete Movie
+- DMCA takedown modal with reason
+- Country block selector
+- Age restriction dropdown
+
+-----------------------------------
+🔍 SEO MANAGEMENT
+-----------------------------------
+- Meta title
+- Meta description
+- Keywords
+- Custom slug
+- Sitemap generation button
+- SEO coverage stats
+
+-----------------------------------
+📊 DASHBOARD
+-----------------------------------
+Dashboard widgets:
+- Total Movies
+- Active Ads
+- CTR
+- Revenue (from referrals)
+- Trending movies chart
+- Ads performance chart
+
+-----------------------------------
+📡 API BASE URL
+-----------------------------------
+Use:
+http://localhost:3000/api/admin
+
+ALL APIs must exactly match the documentation provided.
+
+-----------------------------------
+📌 IMPORTANT RULES
+-----------------------------------
+- Use reusable components
+- Clean, modern UI
+- Fully responsive
+- No dummy data
+- Strict API integration
+- Handle loading, error, success states
+- Use pagination everywhere needed
+- Code must be scalable and readable
+
+-----------------------------------
+FINAL OUTPUT EXPECTATION
+-----------------------------------
+Generate:
+1) Full React project structure
+2) Sidebar + Routing
+3) API service files
+4) Pages wired to APIs
+5) Clean UI with Tailwind
+6) Ready-to-run admin panel
+
+Start by scaffolding the project and then implement each module step by step.
+
+
+
+and apis dox also have the 
+# Admin API Documentation
+
+## Base URL
+```
+http://localhost:3000/api/admin
+```
+
+## Authentication
+
+All admin endpoints require authentication with admin role. Include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer <admin-jwt-token>
+```
+
+---
+
+## 🎯 Ads Management APIs
+
+### 1. Create Ad
+
+Create a new advertisement with media files.
+
+**Endpoint:** `POST /api/admin/ads`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+Name: "Summer Sale Banner"
+Type: "banner-top"
+ClickUrl: "https://example.com/sale"
+Title: "Summer Sale"
+Description: "Get 50% off on all items"
+Position: "top"
+Width: 728
+Height: 90
+StartDate: "2024-01-01T00:00:00Z"
+EndDate: "2024-12-31T23:59:59Z"
+TargetCountries: ["US", "CA", "UK"]
+Priority: 10
+AdvertiserName: "Brand Name"
+AdvertiserEmail: "advertiser@example.com"
+image: <file> (optional)
+video: <file> (optional)
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Ad created successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k1",
+    "Name": "Summer Sale Banner",
+    "Type": "banner-top",
+    "ImageUrl": "https://bucket.s3.region.amazonaws.com/ads/1234567890-banner.jpg",
+    "VideoUrl": null,
+    "ClickUrl": "https://example.com/sale",
+    "Position": "top",
+    "Width": 728,
+    "Height": 90,
+    "IsActive": true,
+    "StartDate": "2024-01-01T00:00:00.000Z",
+    "EndDate": "2024-12-31T23:59:59.000Z",
+    "TargetCountries": ["US", "CA", "UK"],
+    "Priority": 10,
+    "Impressions": 0,
+    "Clicks": 0,
+    "CreatedBy": "65a1b2c3d4e5f6g7h8i9j0k2",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+**Error Response (400):**
+```json
+{
+  "success": false,
+  "message": "Failed to create ad",
+  "error": "Type is required"
+}
+```
+
+---
+
+### 2. Get All Ads
+
+Retrieve all ads with filtering and pagination.
+
+**Endpoint:** `GET /api/admin/ads`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+```
+
+**Query Parameters:**
+```
+type: "banner-top" (optional) - Filter by ad type
+isActive: "true" (optional) - Filter by active status
+page: 1 (optional) - Page number
+limit: 20 (optional) - Items per page
+```
+
+**Example Request:**
+```
+GET /api/admin/ads?type=banner-top&isActive=true&page=1&limit=20
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "65a1b2c3d4e5f6g7h8i9j0k1",
+      "Name": "Summer Sale Banner",
+      "Type": "banner-top",
+      "ImageUrl": "https://bucket.s3.region.amazonaws.com/ads/banner.jpg",
+      "ClickUrl": "https://example.com/sale",
+      "IsActive": true,
+      "Impressions": 1500,
+      "Clicks": 45,
+      "TargetCategories": [
+        {
+          "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+          "Name": "Action",
+          "Slug": "action"
+        }
+      ],
+      "CreatedBy": {
+        "_id": "65a1b2c3d4e5f6g7h8i9j0k2",
+        "Name": "Admin User",
+        "Email": "admin@example.com"
+      },
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 50,
+    "pages": 3
+  }
+}
+```
+
+---
+
+### 3. Get Ad by ID
+
+Retrieve a specific ad by its ID.
+
+**Endpoint:** `GET /api/admin/ads/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k1",
+    "Name": "Summer Sale Banner",
+    "Type": "banner-top",
+    "ImageUrl": "https://bucket.s3.region.amazonaws.com/ads/banner.jpg",
+    "ClickUrl": "https://example.com/sale",
+    "Position": "top",
+    "Width": 728,
+    "Height": 90,
+    "IsActive": true,
+    "StartDate": "2024-01-01T00:00:00.000Z",
+    "EndDate": "2024-12-31T23:59:59.000Z",
+    "TargetCategories": [],
+    "TargetMovies": [],
+    "TargetCountries": ["US", "CA", "UK"],
+    "Priority": 10,
+    "Impressions": 1500,
+    "Clicks": 45,
+    "AdvertiserName": "Brand Name",
+    "AdvertiserEmail": "advertiser@example.com",
+    "CreatedBy": {
+      "_id": "65a1b2c3d4e5f6g7h8i9j0k2",
+      "Name": "Admin User",
+      "Email": "admin@example.com"
+    },
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+**Error Response (404):**
+```json
+{
+  "success": false,
+  "message": "Ad not found"
+}
+```
+
+---
+
+### 4. Update Ad
+
+Update an existing ad.
+
+**Endpoint:** `PUT /api/admin/ads/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+Name: "Updated Ad Name"
+IsActive: false
+image: <file> (optional)
+video: <file> (optional)
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Ad updated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k1",
+    "Name": "Updated Ad Name",
+    "IsActive": false,
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 5. Delete Ad
+
+Delete an ad permanently.
+
+**Endpoint:** `DELETE /api/admin/ads/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Ad deleted successfully"
+}
+```
+
+---
+
+### 6. Toggle Ad Status
+
+Activate or deactivate an ad.
+
+**Endpoint:** `PATCH /api/admin/ads/:id/toggle-status`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Ad activated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k1",
+    "IsActive": true
+  }
+}
+```
+
+---
+
+### 7. Get Ad Analytics
+
+Get analytics data for a specific ad.
+
+**Endpoint:** `GET /api/admin/ads/analytics/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "impressions": 1500,
+    "clicks": 45,
+    "clickThroughRate": "3.00",
+    "ad": {
+      "id": "65a1b2c3d4e5f6g7h8i9j0k1",
+      "name": "Summer Sale Banner",
+      "type": "banner-top"
+    }
+  }
+}
+```
+
+---
+
+## 🎬 Movie Management APIs
+
+### 1. Create Movie (With File Uploads)
+
+Create a new movie with multiple quality videos, subtitles, thumbnails, and posters.
+
+**Endpoint:** `POST /api/admin/movies`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+
+**Required Fields:**
+```
+Title: "The Amazing Movie"
+Category: "65a1b2c3d4e5f6g7h8i9j0k3"
+```
+
+**Optional Fields:**
+```
+Description: "A thrilling adventure movie"
+SubCategory: "65a1b2c3d4e5f6g7h8i9j0k4"
+Channel: "65a1b2c3d4e5f6g7h8i9j0k5"
+MetaTitle: "The Amazing Movie - Watch Online"
+MetaDescription: "Watch The Amazing Movie online in HD quality"
+MetaKeywords: ["action", "adventure", "thriller"] (JSON array as string)
+AgeRestriction: "PG-13" (G, PG, PG-13, R, NC-17)
+Genre: ["Action", "Adventure"] (JSON array as string)
+Cast: ["Actor One", "Actor Two"] (JSON array as string)
+Director: "Director Name"
+Year: 2024
+ReleaseDate: "2024-01-01"
+BlockedCountries: ["CN", "RU"] (JSON array as string)
+TrailerUrl: "https://youtube.com/watch?v=trailer"
+```
+
+**File Uploads:**
+```
+thumbnail: <image file> (JPEG, PNG, WebP, GIF - Max 10MB)
+poster: <image file> (JPEG, PNG, WebP, GIF - Max 10MB)
+video: <video file> (MP4, WebM, QuickTime - Max 5GB per file)
+  - Can upload multiple videos for different qualities
+  - Use qualities[] array to specify quality for each video
+  - Example: qualities[0]="720p", qualities[1]="1080p"
+subtitle: <subtitle file> (SRT, VTT - Max 10MB)
+  - Can upload multiple subtitles for different languages
+  - Use subtitleLanguages[] and subtitleLanguageCodes[] arrays
+  - Example: subtitleLanguages[0]="English", subtitleLanguageCodes[0]="en"
+```
+
+**Example cURL Request:**
+```bash
+curl -X POST http://localhost:3000/api/admin/movies \
+  -H "Authorization: Bearer <admin-token>" \
+  -F "Title=The Amazing Movie" \
+  -F "Description=A thrilling adventure movie" \
+  -F "Category=65a1b2c3d4e5f6g7h8i9j0k3" \
+  -F "AgeRestriction=PG-13" \
+  -F "Year=2024" \
+  -F "Genre=[\"Action\", \"Adventure\"]" \
+  -F "Cast=[\"Actor One\", \"Actor Two\"]" \
+  -F "Director=Director Name" \
+  -F "thumbnail=@/path/to/thumbnail.jpg" \
+  -F "poster=@/path/to/poster.jpg" \
+  -F "video=@/path/to/video720p.mp4" \
+  -F "qualities[0]=720p" \
+  -F "video=@/path/to/video1080p.mp4" \
+  -F "qualities[1]=1080p" \
+  -F "subtitle=@/path/to/english.srt" \
+  -F "subtitleLanguages[0]=English" \
+  -F "subtitleLanguageCodes[0]=en" \
+  -F "subtitle=@/path/to/spanish.srt" \
+  -F "subtitleLanguages[1]=Spanish" \
+  -F "subtitleLanguageCodes[1]=es"
+```
+
+**Example JavaScript/FormData:**
+```javascript
+const formData = new FormData();
+formData.append('Title', 'The Amazing Movie');
+formData.append('Description', 'A thrilling adventure movie');
+formData.append('Category', '65a1b2c3d4e5f6g7h8i9j0k3');
+formData.append('AgeRestriction', 'PG-13');
+formData.append('Year', '2024');
+formData.append('Genre', JSON.stringify(['Action', 'Adventure']));
+formData.append('Cast', JSON.stringify(['Actor One', 'Actor Two']));
+formData.append('Director', 'Director Name');
+formData.append('thumbnail', thumbnailFile);
+formData.append('poster', posterFile);
+formData.append('video', video720pFile);
+formData.append('qualities[0]', '720p');
+formData.append('video', video1080pFile);
+formData.append('qualities[1]', '1080p');
+formData.append('subtitle', englishSubtitleFile);
+formData.append('subtitleLanguages[0]', 'English');
+formData.append('subtitleLanguageCodes[0]', 'en');
+
+fetch('http://localhost:3000/api/admin/movies', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <admin-token>'
+  },
+  body: formData
+});
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Movie created successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Title": "The Amazing Movie",
+    "Slug": "the-amazing-movie",
+    "Description": "A thrilling adventure movie",
+    "Thumbnail": "https://bucket.s3.region.amazonaws.com/thumbnails/1234567890-thumb.jpg",
+    "Poster": "https://bucket.s3.region.amazonaws.com/thumbnails/1234567890-poster.jpg",
+    "Category": "65a1b2c3d4e5f6g7h8i9j0k3",
+    "Status": "active",
+    "IsTrending": false,
+    "IsFeatured": false,
+    "AgeRestriction": "PG-13",
+    "BlockedCountries": ["CN", "RU"],
+    "Views": 0,
+    "Likes": 0,
+    "Rating": 0,
+    "Videos": [],
+    "Subtitles": [],
+    "CreatedBy": "65a1b2c3d4e5f6g7h8i9j0k2",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 2. Get All Movies
+
+Retrieve all movies with filtering and pagination.
+
+**Endpoint:** `GET /api/admin/movies`
+
+**Query Parameters:**
+```
+status: "active" (optional)
+category: "<category-id>" (optional)
+isTrending: "true" (optional)
+isFeatured: "true" (optional)
+search: "movie title" (optional)
+page: 1 (optional)
+limit: 20 (optional)
+sortBy: "createdAt" (optional)
+sortOrder: "desc" (optional)
+```
+
+**Example Request:**
+```
+GET /api/admin/movies?status=active&isTrending=true&page=1&limit=20
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+      "Title": "The Amazing Movie",
+      "Slug": "the-amazing-movie",
+      "Thumbnail": "https://bucket.s3.region.amazonaws.com/thumbnails/thumb.jpg",
+      "Status": "active",
+      "IsTrending": true,
+      "IsFeatured": false,
+      "Views": 15000,
+      "Rating": 4.5,
+      "Category": {
+        "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+        "Name": "Action",
+        "Slug": "action"
+      },
+      "CreatedBy": {
+        "_id": "65a1b2c3d4e5f6g7h8i9j0k2",
+        "Name": "Admin User",
+        "Email": "admin@example.com"
+      },
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "pages": 8
+  }
+}
+```
+
+---
+
+### 3. Get Movie by ID
+
+Retrieve a specific movie by its ID.
+
+**Endpoint:** `GET /api/admin/movies/:id`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Title": "The Amazing Movie",
+    "Slug": "the-amazing-movie",
+    "Description": "A thrilling adventure movie",
+    "Thumbnail": "https://bucket.s3.region.amazonaws.com/thumbnails/thumb.jpg",
+    "Poster": "https://bucket.s3.region.amazonaws.com/thumbnails/poster.jpg",
+    "Videos": [
+      {
+        "Quality": "720p",
+        "Url": "https://bucket.s3.region.amazonaws.com/movies/video720p.mp4",
+        "Duration": 7200,
+        "FileSize": 2147483648
+      },
+      {
+        "Quality": "1080p",
+        "Url": "https://bucket.s3.region.amazonaws.com/movies/video1080p.mp4",
+        "Duration": 7200,
+        "FileSize": 4294967296
+      }
+    ],
+    "Subtitles": [
+      {
+        "Language": "English",
+        "LanguageCode": "en",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/en.srt"
+      },
+      {
+        "Language": "Spanish",
+        "LanguageCode": "es",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/es.srt"
+      }
+    ],
+    "Category": {
+      "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+      "Name": "Action",
+      "Slug": "action"
+    },
+    "Status": "active",
+    "Views": 15000,
+    "Rating": 4.5
+  }
+}
+```
+
+---
+
+### 4. Update Movie
+
+Update an existing movie.
+
+**Endpoint:** `PUT /api/admin/movies/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+Title: "Updated Movie Title"
+Description: "Updated description"
+thumbnail: <file> (optional)
+poster: <file> (optional)
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Movie updated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Title": "Updated Movie Title",
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 5. Delete Movie
+
+Delete a movie permanently (also deletes associated files from S3).
+
+**Endpoint:** `DELETE /api/admin/movies/:id`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Movie deleted successfully"
+}
+```
+
+---
+
+### 6. Upload Video Quality
+
+Upload a video file for a specific quality.
+
+**Endpoint:** `POST /api/admin/movies/:id/video`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+video: <file>
+quality: "1080p"
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Video uploaded",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Videos": [
+      {
+        "Quality": "1080p",
+        "Url": "https://bucket.s3.region.amazonaws.com/movies/video1080p.mp4",
+        "FileSize": 4294967296
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 7. Upload Subtitle
+
+Upload a subtitle file for an existing movie.
+
+**Endpoint:** `POST /api/admin/movies/:id/subtitle`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+subtitle: <subtitle file> (Required)
+  - Supported formats: SRT, VTT
+  - Max file size: 10MB
+language: "French" (Required)
+  - Language name: English, Spanish, French, etc.
+languageCode: "fr" (Required)
+  - ISO 639-1 language code: en, es, fr, de, etc.
+```
+
+**Example cURL Request:**
+```bash
+curl -X POST http://localhost:3000/api/admin/movies/65a1b2c3d4e5f6g7h8i9j0k6/subtitle \
+  -H "Authorization: Bearer <admin-token>" \
+  -F "subtitle=@/path/to/french.srt" \
+  -F "language=French" \
+  -F "languageCode=fr"
+```
+
+**Example JavaScript/FormData:**
+```javascript
+const formData = new FormData();
+formData.append('subtitle', subtitleFile);
+formData.append('language', 'French');
+formData.append('languageCode', 'fr');
+
+fetch('http://localhost:3000/api/admin/movies/65a1b2c3d4e5f6g7h8i9j0k6/subtitle', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <admin-token>'
+  },
+  body: formData
+});
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Subtitle uploaded",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Title": "The Amazing Movie",
+    "Subtitles": [
+      {
+        "Language": "English",
+        "LanguageCode": "en",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/en.srt"
+      },
+      {
+        "Language": "Spanish",
+        "LanguageCode": "es",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/es.srt"
+      },
+      {
+        "Language": "French",
+        "LanguageCode": "fr",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/fr.srt"
+      }
+    ],
+    "updatedAt": "2024-01-15T11:30:00.000Z"
+  }
+}
+```
+
+**Error Response (400):**
+```json
+{
+  "success": false,
+  "message": "No subtitle file provided"
+}
+```
+
+**Error Response (404):**
+```json
+{
+  "success": false,
+  "message": "Movie not found"
+}
+```
+
+**Error Response (400):**
+```json
+{
+  "success": false,
+  "message": "Invalid file type. Only SRT/VTT files are allowed."
+}
+```
+
+---
+
+### 7.1. Upload Multiple Videos at Once
+
+You can upload multiple video qualities in a single request when creating a movie. Use array notation in form data:
+
+**Example:**
+```
+video: <file> (video720p.mp4)
+qualities[0]: "720p"
+video: <file> (video1080p.mp4)
+qualities[1]: "1080p"
+video: <file> (video480p.mp4)
+qualities[2]: "480p"
+```
+
+**Note:** All videos will be uploaded to S3 and added to the movie's Videos array.
+
+---
+
+### 7.2. Upload Multiple Subtitles at Once
+
+You can upload multiple subtitle files in a single request when creating a movie:
+
+**Example:**
+```
+subtitle: <file> (english.srt)
+subtitleLanguages[0]: "English"
+subtitleLanguageCodes[0]: "en"
+subtitle: <file> (spanish.srt)
+subtitleLanguages[1]: "Spanish"
+subtitleLanguageCodes[1]: "es"
+subtitle: <file> (french.srt)
+subtitleLanguages[2]: "French"
+subtitleLanguageCodes[2]: "fr"
+```
+
+---
+
+### 7.3. File Upload Specifications
+
+**Thumbnail/Poster Images:**
+- **Formats:** JPEG, PNG, WebP, GIF
+- **Max Size:** 10MB per file
+- **Recommended:** 1920x1080 for poster, 640x360 for thumbnail
+- **Field Names:** `thumbnail`, `poster`
+
+**Video Files:**
+- **Formats:** MP4, WebM, QuickTime (MOV)
+- **Max Size:** 5GB per file
+- **Recommended Qualities:** 480p, 720p, 1080p
+- **Field Name:** `video` (can be multiple)
+- **Quality Field:** `qualities[]` (array index matching video order)
+
+**Subtitle Files:**
+- **Formats:** SRT, VTT
+- **Max Size:** 10MB per file
+- **Field Name:** `subtitle` (can be multiple)
+- **Language Fields:** `subtitleLanguages[]`, `subtitleLanguageCodes[]` (arrays matching subtitle order)
+
+---
+
+### 7.4. Complete Movie Upload Example
+
+**Full Example with All Files:**
+
+```bash
+curl -X POST http://localhost:3000/api/admin/movies \
+  -H "Authorization: Bearer <admin-token>" \
+  -F "Title=The Amazing Movie" \
+  -F "Description=A thrilling adventure movie with amazing visuals" \
+  -F "Category=65a1b2c3d4e5f6g7h8i9j0k3" \
+  -F "SubCategory=65a1b2c3d4e5f6g7h8i9j0k4" \
+  -F "Channel=65a1b2c3d4e5f6g7h8i9j0k5" \
+  -F "MetaTitle=The Amazing Movie - Watch Online Free" \
+  -F "MetaDescription=Watch The Amazing Movie online in HD quality" \
+  -F "MetaKeywords=[\"action\", \"adventure\", \"thriller\"]" \
+  -F "AgeRestriction=PG-13" \
+  -F "Year=2024" \
+  -F "ReleaseDate=2024-01-01" \
+  -F "Genre=[\"Action\", \"Adventure\", \"Thriller\"]" \
+  -F "Cast=[\"Actor One\", \"Actor Two\", \"Actor Three\"]" \
+  -F "Director=Director Name" \
+  -F "TrailerUrl=https://youtube.com/watch?v=trailer" \
+  -F "BlockedCountries=[\"CN\", \"RU\"]" \
+  -F "thumbnail=@/path/to/thumbnail.jpg" \
+  -F "poster=@/path/to/poster.jpg" \
+  -F "video=@/path/to/video480p.mp4" \
+  -F "qualities[0]=480p" \
+  -F "video=@/path/to/video720p.mp4" \
+  -F "qualities[1]=720p" \
+  -F "video=@/path/to/video1080p.mp4" \
+  -F "qualities[2]=1080p" \
+  -F "subtitle=@/path/to/english.srt" \
+  -F "subtitleLanguages[0]=English" \
+  -F "subtitleLanguageCodes[0]=en" \
+  -F "subtitle=@/path/to/spanish.srt" \
+  -F "subtitleLanguages[1]=Spanish" \
+  -F "subtitleLanguageCodes[1]=es" \
+  -F "subtitle=@/path/to/french.srt" \
+  -F "subtitleLanguages[2]=French" \
+  -F "subtitleLanguageCodes[2]=fr"
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Movie created successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Title": "The Amazing Movie",
+    "Slug": "the-amazing-movie",
+    "Description": "A thrilling adventure movie with amazing visuals",
+    "Thumbnail": "https://bucket.s3.region.amazonaws.com/thumbnails/1234567890-thumbnail.jpg",
+    "Poster": "https://bucket.s3.region.amazonaws.com/thumbnails/1234567890-poster.jpg",
+    "TrailerUrl": "https://youtube.com/watch?v=trailer",
+    "Videos": [
+      {
+        "Quality": "480p",
+        "Url": "https://bucket.s3.region.amazonaws.com/movies/1234567890-video480p.mp4",
+        "FileSize": 1073741824,
+        "Duration": null
+      },
+      {
+        "Quality": "720p",
+        "Url": "https://bucket.s3.region.amazonaws.com/movies/1234567891-video720p.mp4",
+        "FileSize": 2147483648,
+        "Duration": null
+      },
+      {
+        "Quality": "1080p",
+        "Url": "https://bucket.s3.region.amazonaws.com/movies/1234567892-video1080p.mp4",
+        "FileSize": 4294967296,
+        "Duration": null
+      }
+    ],
+    "Subtitles": [
+      {
+        "Language": "English",
+        "LanguageCode": "en",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/1234567893-english.srt"
+      },
+      {
+        "Language": "Spanish",
+        "LanguageCode": "es",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/1234567894-spanish.srt"
+      },
+      {
+        "Language": "French",
+        "LanguageCode": "fr",
+        "Url": "https://bucket.s3.region.amazonaws.com/subtitles/1234567895-french.srt"
+      }
+    ],
+    "Category": "65a1b2c3d4e5f6g7h8i9j0k3",
+    "SubCategory": "65a1b2c3d4e5f6g7h8i9j0k4",
+    "Channel": "65a1b2c3d4e5f6g7h8i9j0k5",
+    "MetaTitle": "The Amazing Movie - Watch Online Free",
+    "MetaDescription": "Watch The Amazing Movie online in HD quality",
+    "MetaKeywords": ["action", "adventure", "thriller"],
+    "Status": "active",
+    "IsTrending": false,
+    "IsFeatured": false,
+    "AgeRestriction": "PG-13",
+    "BlockedCountries": ["CN", "RU"],
+    "Views": 0,
+    "Likes": 0,
+    "Rating": 0,
+    "Year": 2024,
+    "ReleaseDate": "2024-01-01T00:00:00.000Z",
+    "Genre": ["Action", "Adventure", "Thriller"],
+    "Cast": ["Actor One", "Actor Two", "Actor Three"],
+    "Director": "Director Name",
+    "CreatedBy": "65a1b2c3d4e5f6g7h8i9j0k2",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 8. Toggle Trending Status
+
+Add or remove movie from trending section.
+
+**Endpoint:** `PATCH /api/admin/movies/:id/toggle-trending`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Movie added to trending",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "IsTrending": true
+  }
+}
+```
+
+---
+
+### 9. Toggle Featured Status
+
+Add or remove movie from featured section.
+
+**Endpoint:** `PATCH /api/admin/movies/:id/toggle-featured`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Movie added to featured",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "IsFeatured": true
+  }
+}
+```
+
+---
+
+### 10. DMCA Takedown
+
+Apply DMCA takedown to a movie.
+
+**Endpoint:** `PATCH /api/admin/movies/:id/dmca-takedown`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "reason": "Copyright violation reported by content owner"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "DMCA takedown applied successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "Status": "dmca",
+    "IsDMCA": true,
+    "DMCAReason": "Copyright violation reported by content owner"
+  }
+}
+```
+
+---
+
+### 11. Update Country Block
+
+Block or unblock countries for a movie.
+
+**Endpoint:** `PATCH /api/admin/movies/:id/country-block`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "countries": ["CN", "RU"],
+  "action": "block"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Countries blocked successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "BlockedCountries": ["CN", "RU"]
+  }
+}
+```
+
+---
+
+### 12. Update Age Restriction
+
+Update age restriction for a movie.
+
+**Endpoint:** `PATCH /api/admin/movies/:id/age-restriction`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "ageRestriction": "R"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Age restriction updated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "AgeRestriction": "R"
+  }
+}
+```
+
+---
+
+## 📁 Category Management APIs
+
+### 1. Create Category
+
+**Endpoint:** `POST /api/admin/categories`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+Name: "Action"
+Description: "Action movies category"
+SortOrder: 1
+image: <file> (optional)
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Category created successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+    "Name": "Action",
+    "Slug": "action",
+    "Description": "Action movies category",
+    "Image": "https://bucket.s3.region.amazonaws.com/thumbnails/category.jpg",
+    "IsActive": true,
+    "SortOrder": 1,
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 2. Get All Categories
+
+**Endpoint:** `GET /api/admin/categories`
+
+**Query Parameters:**
+```
+isActive: "true" (optional)
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+      "Name": "Action",
+      "Slug": "action",
+      "Image": "https://bucket.s3.region.amazonaws.com/thumbnails/category.jpg",
+      "IsActive": true,
+      "SortOrder": 1
+    }
+  ]
+}
+```
+
+---
+
+### 3. Get Category by ID
+
+**Endpoint:** `GET /api/admin/categories/:id`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+    "Name": "Action",
+    "Slug": "action",
+    "Description": "Action movies category",
+    "Image": "https://bucket.s3.region.amazonaws.com/thumbnails/category.jpg",
+    "IsActive": true,
+    "SortOrder": 1,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 4. Update Category
+
+**Endpoint:** `PUT /api/admin/categories/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: multipart/form-data
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Category updated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k3",
+    "Name": "Updated Category Name",
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 5. Delete Category
+
+**Endpoint:** `DELETE /api/admin/categories/:id`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Category deleted successfully"
+}
+```
+
+---
+
+## 📺 Channel Management APIs
+
+Similar structure to Category APIs:
+
+- `POST /api/admin/channels` - Create channel
+- `GET /api/admin/channels` - Get all channels
+- `GET /api/admin/channels/:id` - Get channel by ID
+- `PUT /api/admin/channels/:id` - Update channel
+- `DELETE /api/admin/channels/:id` - Delete channel
+
+**Request/Response format same as Categories**
+
+---
+
+## 📂 SubCategory Management APIs
+
+Similar structure to Category APIs:
+
+- `POST /api/admin/subcategories` - Create subcategory
+- `GET /api/admin/subcategories?category=<id>` - Get all subcategories
+- `GET /api/admin/subcategories/:id` - Get subcategory by ID
+- `PUT /api/admin/subcategories/:id` - Update subcategory
+- `DELETE /api/admin/subcategories/:id` - Delete subcategory
+
+**Request Body Example:**
+```json
+{
+  "Name": "Superhero",
+  "Category": "65a1b2c3d4e5f6g7h8i9j0k3",
+  "Description": "Superhero subcategory",
+  "SortOrder": 1
+}
+```
+
+---
+
+## 🔍 SEO Management APIs
+
+### 1. Update Movie SEO
+
+**Endpoint:** `PUT /api/admin/seo/movie/:id`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "metaTitle": "The Amazing Movie - Watch Online Free",
+  "metaDescription": "Watch The Amazing Movie online in HD quality. Free streaming available.",
+  "metaKeywords": ["action", "adventure", "thriller", "movie"],
+  "customSlug": "amazing-movie-2024"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "SEO updated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k6",
+    "MetaTitle": "The Amazing Movie - Watch Online Free",
+    "MetaDescription": "Watch The Amazing Movie online in HD quality. Free streaming available.",
+    "MetaKeywords": ["action", "adventure", "thriller", "movie"],
+    "Slug": "amazing-movie-2024"
+  }
+}
+```
+
+---
+
+### 2. Generate Sitemap
+
+**Endpoint:** `POST /api/admin/seo/sitemap/generate`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Sitemap generated successfully",
+  "data": {
+    "url": "https://yourdomain.com/sitemap.xml",
+    "totalUrls": 250
+  }
+}
+```
+
+---
+
+### 3. Get SEO Analytics
+
+**Endpoint:** `GET /api/admin/seo/analytics`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "totalMovies": 150,
+    "moviesWithSEO": 120,
+    "moviesWithoutSEO": 30,
+    "seoCoverage": "80.00"
+  }
+}
+```
+
+---
+
+## 🎁 Referral Management APIs
+
+### 1. Get All Referrals
+
+**Endpoint:** `GET /api/admin/referrals`
+
+**Query Parameters:**
+```
+status: "completed" (optional) - Filter by status (pending, completed, cancelled)
+page: 1 (optional)
+limit: 20 (optional)
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "65a1b2c3d4e5f6g7h8i9j0k7",
+      "Referrer": {
+        "_id": "65a1b2c3d4e5f6g7h8i9j0k8",
+        "Name": "John Doe",
+        "Email": "john@example.com",
+        "ReferralCode": "REF123456"
+      },
+      "ReferredUser": {
+        "_id": "65a1b2c3d4e5f6g7h8i9j0k9",
+        "Name": "Jane Smith",
+        "Email": "jane@example.com"
+      },
+      "ReferralCode": "REF123456",
+      "Earnings": 50,
+      "Status": "completed",
+      "createdAt": "2024-01-10T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "pages": 5
+  }
+}
+```
+
+---
+
+### 2. Get Referral Statistics
+
+**Endpoint:** `GET /api/admin/referrals/stats`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "totalReferrals": 100,
+    "completedReferrals": 75,
+    "pendingReferrals": 20,
+    "totalEarnings": 5000
+  }
+}
+```
+
+---
+
+### 3. Update Referral Earnings
+
+**Endpoint:** `PATCH /api/admin/referrals/:id/earnings`
+
+**Headers:**
+```
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "earnings": 100,
+  "status": "completed"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Referral earnings updated successfully",
+  "data": {
+    "_id": "65a1b2c3d4e5f6g7h8i9j0k7",
+    "Earnings": 100,
+    "Status": "completed"
+  }
+}
+```
+
+---
+
+## Error Responses
+
+All endpoints may return these error responses:
+
+**401 Unauthorized:**
+```json
+{
+  "success": false,
+  "message": "Authentication required. Please login."
+}
+```
+
+**403 Forbidden:**
+```json
+{
+  "success": false,
+  "message": "Access denied. Admin privileges required."
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "success": false,
+  "message": "Resource not found"
+}
+```
+
+**500 Internal Server Error:**
+```json
+{
+  "success": false,
+  "message": "Internal server error",
+  "error": "Detailed error message"
+}
+```
+
+---
+
+## Ad Types
+
+- `pre-roll` - Video ads before movie starts
+- `mid-roll` - Video ads during movie
+- `banner-top` - Banner ads at top of page
+- `banner-bottom` - Banner ads at bottom of page
+- `native` - Native ads between movie lists
+- `popup` - Popup ads
+- `interstitial` - Full-screen interstitial ads
+
+## Movie Qualities
+
+- `480p` - Standard definition
+- `720p` - High definition
+- `1080p` - Full high definition
+
+## Movie Status
+
+- `active` - Movie is active and visible
+- `inactive` - Movie is inactive
+- `blocked` - Movie is blocked
+- `dmca` - Movie has DMCA takedown
+
+## Age Restrictions
+
+- `G` - General audience
+- `PG` - Parental guidance suggested
+- `PG-13` - Parents strongly cautioned
+- `R` - Restricted
+- `NC-17` - Adults only
+
+ this also
