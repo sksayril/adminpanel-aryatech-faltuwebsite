@@ -275,12 +275,12 @@ export const moviesApi = {
             formData.append(key, value);
           }
         } else if (key === 'videos' && Array.isArray(value)) {
-          (value as Array<{ file: File; quality: string }>).forEach((video, index) => {
+          (value as unknown as Array<{ file: File; quality: string }>).forEach((video, index) => {
             formData.append('video', video.file);
             formData.append(`qualities[${index}]`, video.quality);
           });
         } else if (key === 'subtitles' && Array.isArray(value)) {
-          (value as Array<{ file: File; language: string; languageCode: string }>).forEach((subtitle, index) => {
+          (value as unknown as Array<{ file: File; language: string; languageCode: string }>).forEach((subtitle, index) => {
             formData.append('subtitle', subtitle.file);
             formData.append(`subtitleLanguages[${index}]`, subtitle.language);
             formData.append(`subtitleLanguageCodes[${index}]`, subtitle.languageCode);
