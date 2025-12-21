@@ -44,7 +44,6 @@ export const CreateAd = () => {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<CreateAdFormData>({
     resolver: zodResolver(createAdSchema),
   });

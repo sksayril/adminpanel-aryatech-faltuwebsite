@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { moviesApi } from '@/api/movies.api';
 import { adsApi } from '@/api/ads.api';
 import { referralsApi } from '@/api/referrals.api';
-import { SkeletonStats, SkeletonCard } from '@/components/ui/Skeleton';
+import { SkeletonStats, SkeletonCard, Skeleton } from '@/components/ui/Skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export const Dashboard = () => {

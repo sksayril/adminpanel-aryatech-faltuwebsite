@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { adsApi, Ad } from '@/api/ads.api';
+import { adsApi } from '@/api/ads.api';
 import { AD_TYPES } from '@/utils/constants';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';

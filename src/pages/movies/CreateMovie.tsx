@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { moviesApi, CreateMovieData } from '@/api/movies.api';
 import { categoriesApi } from '@/api/categories.api';
-import { AGE_RESTRICTIONS, COUNTRIES, MOVIE_QUALITIES, SUBTITLE_LANGUAGES } from '@/utils/constants';
+import { AGE_RESTRICTIONS } from '@/utils/constants';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -40,9 +40,9 @@ export const CreateMovie = () => {
   const [poster, setPoster] = useState<File | null>(null);
   const [videos, setVideos] = useState<Array<{ file: File; quality: string }>>([]);
   const [subtitles, setSubtitles] = useState<Array<{ file: File; language: string; languageCode: string }>>([]);
-  const [blockedCountries, setBlockedCountries] = useState<string[]>([]);
-  const [genre, setGenre] = useState<string[]>([]);
-  const [cast, setCast] = useState<string[]>([]);
+  const [blockedCountries] = useState<string[]>([]);
+  const [genre] = useState<string[]>([]);
+  const [cast] = useState<string[]>([]);
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -69,13 +69,6 @@ export const CreateMovie = () => {
     },
   });
 
-  const addVideo = () => {
-    setVideos([...videos, { file: new File([], ''), quality: '720p' }]);
-  };
-
-  const addSubtitle = () => {
-    setSubtitles([...subtitles, { file: new File([], ''), language: 'English', languageCode: 'en' }]);
-  };
 
   const onSubmit = async (data: CreateMovieFormData) => {
     const formData: CreateMovieData = {
@@ -96,7 +89,7 @@ export const CreateMovie = () => {
       BlockedCountries: blockedCountries.length > 0 ? blockedCountries : undefined,
       thumbnail: thumbnail || undefined,
       poster: poster || undefined,
-      videos: videos.length > 0 ? videos : undefined,
+      video: videos.length > 0 ? videos[0]?.file : undefined,
       subtitles: subtitles.length > 0 ? subtitles : undefined,
     };
 

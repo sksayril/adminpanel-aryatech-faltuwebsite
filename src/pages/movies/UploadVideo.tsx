@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { moviesApi } from '@/api/movies.api';
 import { MOVIE_QUALITIES } from '@/utils/constants';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';

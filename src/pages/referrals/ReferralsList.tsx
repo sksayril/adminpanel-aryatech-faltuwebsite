@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { referralsApi } from '@/api/referrals.api';
 import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
 
 export const ReferralsList = () => {
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('');
 
   const { data, isLoading } = useQuery({

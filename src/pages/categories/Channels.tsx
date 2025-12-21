@@ -3,7 +3,7 @@ import { channelsApi } from '@/api/channels.api';
 import { Button } from '@/components/ui/Button';
 
 export const Channels = () => {
-  const { data, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ['channels'],
     queryFn: () => channelsApi.getAll(),
   });
