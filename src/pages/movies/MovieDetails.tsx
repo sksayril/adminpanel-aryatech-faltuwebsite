@@ -11,6 +11,7 @@ import {
   EyeIcon,
   TagIcon,
   FilmIcon,
+  TvIcon,
 } from '@heroicons/react/24/outline';
 
 export const MovieDetails = () => {
@@ -81,6 +82,11 @@ export const MovieDetails = () => {
   const getCategoryName = (category: any): string => {
     if (typeof category === 'string') return category;
     return category?.Name || 'N/A';
+  };
+
+  const getChannelName = (channel: any): string => {
+    if (typeof channel === 'string') return channel;
+    return channel?.Name || 'N/A';
   };
 
   return (
@@ -214,6 +220,59 @@ export const MovieDetails = () => {
             </div>
           </div>
 
+          {/* Channel */}
+          {movie.Channel && (
+            <div className="card">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 flex items-center gap-2">
+                <TvIcon className="h-5 w-5" />
+                Channel
+              </h2>
+              <div className="flex items-start gap-4">
+                {typeof movie.Channel !== 'string' && movie.Channel.Logo && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={movie.Channel.Logo}
+                      alt={movie.Channel.Name}
+                      className="w-20 h-20 object-contain rounded-lg border border-gray-200 bg-white p-2"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Channel Name</label>
+                    <p className="text-sm text-gray-900 font-semibold">{getChannelName(movie.Channel)}</p>
+                  </div>
+                  {typeof movie.Channel !== 'string' && movie.Channel.Description && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Description</label>
+                      <p className="text-sm text-gray-900">{movie.Channel.Description}</p>
+                    </div>
+                  )}
+                  {typeof movie.Channel !== 'string' && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Status</label>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          movie.Channel.IsActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {movie.Channel.IsActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  )}
+                  {typeof movie.Channel !== 'string' && movie.Channel.Slug && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Slug</label>
+                      <p className="text-sm text-gray-900 font-mono">{movie.Channel.Slug}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Genre & Cast */}
           {(movie.Genre && movie.Genre.length > 0) || (movie.Cast && movie.Cast.length > 0) ? (
             <div className="card">
@@ -238,14 +297,19 @@ export const MovieDetails = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-500 mb-2 block">Cast</label>
                     <div className="flex flex-wrap gap-2">
-                      {movie.Cast.map((cast, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                        >
-                          {cast}
-                        </span>
-                      ))}
+                      {movie.Cast.map((castItem: any, index: number) => {
+                        // Handle both string (ID) and object (actor) formats
+                        const castName = typeof castItem === 'string' ? castItem : (castItem?.Name || 'Unknown');
+                        const castId = typeof castItem === 'string' ? castItem : (castItem?._id || index);
+                        return (
+                          <span
+                            key={castId || index}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                          >
+                            {castName}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

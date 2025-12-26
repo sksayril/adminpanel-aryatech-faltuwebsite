@@ -24,6 +24,11 @@ import { SEOAnalytics } from '@/pages/seo/SEOAnalytics';
 import { ReferralsList } from '@/pages/referrals/ReferralsList';
 import { ReferralStats } from '@/pages/referrals/ReferralStats';
 import { UploadQueues } from '@/pages/movies/UploadQueues';
+import { Actors } from '@/pages/movies/Actors';
+import { Roles } from '@/pages/subadmin/Roles';
+import { SubAdmins } from '@/pages/subadmin/SubAdmins';
+import { SponsorContact } from '@/pages/sponsor/SponsorContact';
+import { Withdrawals } from '@/pages/withdrawals/Withdrawals';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -192,6 +197,17 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      {/* Actors Route */}
+      <Route
+        path="/actors"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Actors />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
       {/* Categories Routes */}
       <Route
         path="/categories"
@@ -281,6 +297,49 @@ export const AppRoutes = () => {
           <ProtectedRoute>
             <AdminLayout>
               <ReferralStats />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      {/* Sponsor Contact Route */}
+      <Route
+        path="/sponsor-contact"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <SponsorContact />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      {/* Withdrawals Route */}
+      <Route
+        path="/withdrawals"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Withdrawals />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      {/* Subadmin Routes */}
+      <Route
+        path="/subadmin/roles"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Roles />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/subadmin/sub-admins"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <SubAdmins />
             </AdminLayout>
           </ProtectedRoute>
         }

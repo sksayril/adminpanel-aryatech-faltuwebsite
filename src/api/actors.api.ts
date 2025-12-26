@@ -1,36 +1,42 @@
 import axiosInstance from './axios';
 
-export interface Channel {
+export interface Actor {
   _id: string;
   Name: string;
   Slug: string;
   Description?: string;
-  Logo?: string;
+  Image?: string;
+  DateOfBirth?: string;
+  Nationality?: string;
   IsActive: boolean;
   SortOrder?: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CreateChannelData {
+export interface CreateActorData {
   Name: string;
   Description?: string;
+  DateOfBirth?: string;
+  Nationality?: string;
   SortOrder?: number;
   IsActive?: boolean;
-  logo?: File;
+  image?: File;
 }
 
-export interface UpdateChannelData {
+export interface UpdateActorData {
   Name?: string;
   Description?: string;
+  DateOfBirth?: string;
+  Nationality?: string;
   SortOrder?: number;
   IsActive?: boolean;
-  logo?: File;
+  image?: File;
 }
 
-export interface ChannelsListResponse {
+export interface ActorsListResponse {
   success: boolean;
-  data: Channel[];
+  data: Actor[];
   pagination: {
     page: number;
     limit: number;
@@ -39,7 +45,7 @@ export interface ChannelsListResponse {
   };
 }
 
-export const channelsApi = {
+export const actorsApi = {
   getAll: async (params?: {
     isActive?: boolean;
     search?: string;
@@ -47,27 +53,29 @@ export const channelsApi = {
     limit?: number;
     sortBy?: string;
     sortOrder?: string;
-  }): Promise<ChannelsListResponse> => {
-    const response = await axiosInstance.get<ChannelsListResponse>('/channels', { params });
+  }): Promise<ActorsListResponse> => {
+    const response = await axiosInstance.get<ActorsListResponse>('/actors', { params });
     return response.data;
   },
 
-  getById: async (id: string): Promise<{ success: boolean; data: Channel }> => {
-    const response = await axiosInstance.get<{ success: boolean; data: Channel }>(`/channels/${id}`);
+  getById: async (id: string): Promise<{ success: boolean; data: Actor }> => {
+    const response = await axiosInstance.get<{ success: boolean; data: Actor }>(`/actors/${id}`);
     return response.data;
   },
 
-  create: async (data: CreateChannelData): Promise<{ success: boolean; message: string; data: Channel }> => {
+  create: async (data: CreateActorData): Promise<{ success: boolean; message: string; data: Actor }> => {
     const formData = new FormData();
     
     formData.append('Name', data.Name);
     if (data.Description) formData.append('Description', data.Description);
+    if (data.DateOfBirth) formData.append('DateOfBirth', data.DateOfBirth);
+    if (data.Nationality) formData.append('Nationality', data.Nationality);
     if (data.SortOrder !== undefined) formData.append('SortOrder', data.SortOrder.toString());
     if (data.IsActive !== undefined) formData.append('IsActive', data.IsActive.toString());
-    if (data.logo) formData.append('logo', data.logo);
+    if (data.image) formData.append('image', data.image);
 
-    const response = await axiosInstance.post<{ success: boolean; message: string; data: Channel }>(
-      '/channels',
+    const response = await axiosInstance.post<{ success: boolean; message: string; data: Actor }>(
+      '/actors',
       formData,
       {
         headers: {
@@ -78,17 +86,19 @@ export const channelsApi = {
     return response.data;
   },
 
-  update: async (id: string, data: UpdateChannelData): Promise<{ success: boolean; message: string; data: Channel }> => {
+  update: async (id: string, data: UpdateActorData): Promise<{ success: boolean; message: string; data: Actor }> => {
     const formData = new FormData();
     
     if (data.Name) formData.append('Name', data.Name);
     if (data.Description !== undefined) formData.append('Description', data.Description);
+    if (data.DateOfBirth !== undefined) formData.append('DateOfBirth', data.DateOfBirth || '');
+    if (data.Nationality !== undefined) formData.append('Nationality', data.Nationality || '');
     if (data.SortOrder !== undefined) formData.append('SortOrder', data.SortOrder.toString());
     if (data.IsActive !== undefined) formData.append('IsActive', data.IsActive.toString());
-    if (data.logo) formData.append('logo', data.logo);
+    if (data.image) formData.append('image', data.image);
 
-    const response = await axiosInstance.put<{ success: boolean; message: string; data: Channel }>(
-      `/channels/${id}`,
+    const response = await axiosInstance.put<{ success: boolean; message: string; data: Actor }>(
+      `/actors/${id}`,
       formData,
       {
         headers: {
@@ -100,7 +110,8 @@ export const channelsApi = {
   },
 
   delete: async (id: string): Promise<{ success: boolean; message: string }> => {
-    const response = await axiosInstance.delete<{ success: boolean; message: string }>(`/channels/${id}`);
+    const response = await axiosInstance.delete<{ success: boolean; message: string }>(`/actors/${id}`);
     return response.data;
   },
 };
+

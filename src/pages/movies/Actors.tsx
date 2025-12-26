@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { channelsApi, CreateChannelData, Channel } from '@/api/channels.api';
+import { actorsApi, CreateActorData, Actor } from '@/api/actors.api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -13,45 +13,47 @@ import { SkeletonTable, Skeleton } from '@/components/ui/Skeleton';
 import { showToast } from '@/utils/toast';
 import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
-const createChannelSchema = z.object({
-  Name: z.string().min(1, 'Channel name is required'),
+const createActorSchema = z.object({
+  Name: z.string().min(1, 'Actor name is required'),
   Description: z.string().optional(),
+  DateOfBirth: z.string().optional(),
+  Nationality: z.string().optional(),
   SortOrder: z.number().optional(),
   IsActive: z.boolean().optional(),
 });
 
-type CreateChannelFormData = z.infer<typeof createChannelSchema>;
+type CreateActorFormData = z.infer<typeof createActorSchema>;
 
-export const Channels = () => {
+export const Actors = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isActiveFilter, setIsActiveFilter] = useState<string>('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; channelId: string | null }>({
+  const [editingActorId, setEditingActorId] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; actorId: string | null }>({
     isOpen: false,
-    channelId: null,
+    actorId: null,
   });
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Build query params
   const queryParams: any = { page, limit: 20 };
   if (searchQuery) queryParams.search = searchQuery;
   if (isActiveFilter) queryParams.isActive = isActiveFilter === 'true';
 
-  // Fetch channels
+  // Fetch actors
   const { data, isLoading } = useQuery({
-    queryKey: ['channels', queryParams],
-    queryFn: () => channelsApi.getAll(queryParams),
+    queryKey: ['actors', queryParams],
+    queryFn: () => actorsApi.getAll(queryParams),
   });
 
-  // Fetch channel for editing
-  const { data: editChannelData } = useQuery({
-    queryKey: ['channel', editingChannelId],
-    queryFn: () => channelsApi.getById(editingChannelId!),
-    enabled: !!editingChannelId && isEditModalOpen,
+  // Fetch actor for editing
+  const { data: editActorData } = useQuery({
+    queryKey: ['actor', editingActorId],
+    queryFn: () => actorsApi.getById(editingActorId!),
+    enabled: !!editingActorId && isEditModalOpen,
   });
 
   // Create form
@@ -62,8 +64,8 @@ export const Channels = () => {
     reset: resetCreate,
     watch: watchCreate,
     setValue: setCreateValue,
-  } = useForm<CreateChannelFormData>({
-    resolver: zodResolver(createChannelSchema),
+  } = useForm<CreateActorFormData>({
+    resolver: zodResolver(createActorSchema),
     defaultValues: {
       IsActive: true,
       SortOrder: 0,
@@ -78,91 +80,106 @@ export const Channels = () => {
     reset: resetEdit,
     setValue: setEditValue,
     watch: watchEdit,
-  } = useForm<CreateChannelFormData>({
-    resolver: zodResolver(createChannelSchema),
+  } = useForm<CreateActorFormData>({
+    resolver: zodResolver(createActorSchema),
   });
 
   // Load edit data into form
   useEffect(() => {
-    if (editChannelData?.data && isEditModalOpen) {
-      const channel = editChannelData.data;
-      setEditValue('Name', channel.Name);
-      setEditValue('Description', channel.Description || '');
-      setEditValue('SortOrder', channel.SortOrder || 0);
-      setEditValue('IsActive', channel.IsActive);
+    if (editActorData?.data && isEditModalOpen) {
+      const actor = editActorData.data;
+      setEditValue('Name', actor.Name);
+      setEditValue('Description', actor.Description || '');
+      setEditValue('DateOfBirth', actor.DateOfBirth ? actor.DateOfBirth.split('T')[0] : '');
+      setEditValue('Nationality', actor.Nationality || '');
+      setEditValue('SortOrder', actor.SortOrder || 0);
+      setEditValue('IsActive', actor.IsActive);
     }
-  }, [editChannelData, isEditModalOpen, setEditValue]);
+  }, [editActorData, isEditModalOpen, setEditValue]);
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: (data: CreateChannelData) => channelsApi.create(data),
+    mutationFn: (data: CreateActorData) => actorsApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['channels'] });
+      queryClient.invalidateQueries({ queryKey: ['actors'] });
       setIsCreateModalOpen(false);
       resetCreate();
-      setLogoFile(null);
-      showToast.success('Channel created successfully!');
+      setImageFile(null);
+      showToast.success('Actor created successfully!');
     },
     onError: (error: any) => {
-      showToast.error(error?.response?.data?.message || 'Failed to create channel');
+      showToast.error(error?.response?.data?.message || 'Failed to create actor');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { id: string; data: CreateChannelData }) => channelsApi.update(data.id, data.data),
+    mutationFn: (data: { id: string; data: CreateActorData }) => actorsApi.update(data.id, data.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['channels'] });
+      queryClient.invalidateQueries({ queryKey: ['actors'] });
       setIsEditModalOpen(false);
-      setEditingChannelId(null);
+      setEditingActorId(null);
       resetEdit();
-      setLogoFile(null);
-      showToast.success('Channel updated successfully!');
+      setImageFile(null);
+      showToast.success('Actor updated successfully!');
     },
     onError: (error: any) => {
-      showToast.error(error?.response?.data?.message || 'Failed to update channel');
+      showToast.error(error?.response?.data?.message || 'Failed to update actor');
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => channelsApi.delete(id),
+    mutationFn: (id: string) => actorsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['channels'] });
-      setDeleteModal({ isOpen: false, channelId: null });
-      showToast.success('Channel deleted successfully!');
+      queryClient.invalidateQueries({ queryKey: ['actors'] });
+      setDeleteModal({ isOpen: false, actorId: null });
+      showToast.success('Actor deleted successfully!');
     },
     onError: (error: any) => {
-      showToast.error(error?.response?.data?.message || 'Failed to delete channel');
+      showToast.error(error?.response?.data?.message || 'Failed to delete actor');
     },
   });
 
-  const onCreateSubmit = (data: CreateChannelFormData) => {
+  const onCreateSubmit = (data: CreateActorFormData) => {
     createMutation.mutate({
       Name: data.Name,
       Description: data.Description,
+      DateOfBirth: data.DateOfBirth,
+      Nationality: data.Nationality,
       SortOrder: data.SortOrder,
       IsActive: data.IsActive ?? true,
-      logo: logoFile || undefined,
+      image: imageFile || undefined,
     });
   };
 
-  const onEditSubmit = (data: CreateChannelFormData) => {
-    if (!editingChannelId) return;
+  const onEditSubmit = (data: CreateActorFormData) => {
+    if (!editingActorId) return;
     updateMutation.mutate({
-      id: editingChannelId,
+      id: editingActorId,
       data: {
         Name: data.Name,
         Description: data.Description,
+        DateOfBirth: data.DateOfBirth,
+        Nationality: data.Nationality,
         SortOrder: data.SortOrder,
         IsActive: data.IsActive,
-        logo: logoFile || undefined,
+        image: imageFile || undefined,
       },
     });
   };
 
-  const handleEdit = (channel: Channel) => {
-    setEditingChannelId(channel._id);
+  const handleEdit = (actor: Actor) => {
+    setEditingActorId(actor._id);
     setIsEditModalOpen(true);
-    setLogoFile(null);
+    setImageFile(null);
+  };
+
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   if (isLoading) {
@@ -184,19 +201,19 @@ export const Channels = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Channels Management</h1>
-          <p className="text-gray-600">Manage all your channels</p>
+          <h1 className="text-2xl font-bold text-gray-900">Actors Management</h1>
+          <p className="text-gray-600">Manage all your actors</p>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)}>
           <PlusIcon className="h-5 w-5 mr-2" />
-          Create Channel
+          Create Actor
         </Button>
       </div>
 
       {/* Filters */}
       <div className="card grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input
-          label="Search Channels"
+          label="Search Actors"
           placeholder="Search by name, description..."
           value={searchQuery}
           onChange={(e) => {
@@ -232,19 +249,25 @@ export const Channels = () => {
         </div>
       </div>
 
-      {/* Channels Table */}
+      {/* Actors Table */}
       <div className="card overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Logo
+                Image
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Description
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date of Birth
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nationality
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -259,57 +282,63 @@ export const Channels = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {data?.data && data.data.length > 0 ? (
-              data.data.map((channel) => (
-                <tr key={channel._id} className="hover:bg-gray-50">
+              data.data.map((actor) => (
+                <tr key={actor._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {channel.Logo ? (
+                    {actor.Image ? (
                       <img
-                        src={channel.Logo}
-                        alt={channel.Name}
-                        className="h-12 w-12 object-contain rounded-lg"
+                        src={actor.Image}
+                        alt={actor.Name}
+                        className="h-16 w-16 object-cover rounded-lg"
                       />
                     ) : (
-                      <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <span className="text-xs text-gray-500">No Logo</span>
+                      <div className="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-xs text-gray-500">No Image</span>
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{channel.Name}</div>
-                    <div className="text-xs text-gray-500">{channel.Slug}</div>
+                    <div className="text-sm font-medium text-gray-900">{actor.Name}</div>
+                    <div className="text-xs text-gray-500">{actor.Slug}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate">
-                      {channel.Description || 'No description'}
+                      {actor.Description || 'No description'}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {formatDate(actor.DateOfBirth)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {actor.Nationality || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
-                        channel.IsActive
+                        actor.IsActive
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {channel.IsActive ? 'Active' : 'Inactive'}
+                      {actor.IsActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {channel.SortOrder ?? 0}
+                    {actor.SortOrder ?? 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEdit(channel)}
+                        onClick={() => handleEdit(actor)}
                       >
                         <PencilIcon className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={() => setDeleteModal({ isOpen: true, channelId: channel._id })}
+                        onClick={() => setDeleteModal({ isOpen: true, actorId: actor._id })}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -319,8 +348,8 @@ export const Channels = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  No channels found.
+                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  No actors found.
                 </td>
               </tr>
             )}
@@ -332,7 +361,7 @@ export const Channels = () => {
       {data?.pagination && data.pagination.pages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing {((page - 1) * 20) + 1} to {Math.min(page * 20, data.pagination.total)} of {data.pagination.total} channels
+            Showing {((page - 1) * 20) + 1} to {Math.min(page * 20, data.pagination.total)} of {data.pagination.total} actors
           </div>
           <div className="flex space-x-2">
             <Button
@@ -355,15 +384,15 @@ export const Channels = () => {
         </div>
       )}
 
-      {/* Create Channel Modal */}
+      {/* Create Actor Modal */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
           resetCreate();
-          setLogoFile(null);
+          setImageFile(null);
         }}
-        title="Create Channel"
+        title="Create Actor"
         size="md"
       >
         <form onSubmit={handleSubmitCreate(onCreateSubmit)} className="space-y-4">
@@ -371,7 +400,7 @@ export const Channels = () => {
             label="Name *"
             {...registerCreate('Name')}
             error={createErrors.Name?.message}
-            placeholder="HBO"
+            placeholder="Tom Hanks"
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
@@ -379,7 +408,21 @@ export const Channels = () => {
               className="input"
               rows={3}
               {...registerCreate('Description')}
-              placeholder="Premium entertainment channel"
+              placeholder="Academy Award-winning actor"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Date of Birth"
+              type="date"
+              {...registerCreate('DateOfBirth')}
+              error={createErrors.DateOfBirth?.message}
+            />
+            <Input
+              label="Nationality"
+              {...registerCreate('Nationality')}
+              error={createErrors.Nationality?.message}
+              placeholder="American"
             />
           </div>
           <Input
@@ -397,11 +440,11 @@ export const Channels = () => {
             />
           </div>
           <FileUpload
-            label="Logo"
+            label="Actor Image"
             accept="image/*"
             maxSize={5}
-            onChange={(files) => setLogoFile(files?.[0] || null)}
-            preview={logoFile ? URL.createObjectURL(logoFile) : undefined}
+            onChange={(files) => setImageFile(files?.[0] || null)}
+            preview={imageFile ? URL.createObjectURL(imageFile) : undefined}
           />
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button
@@ -410,31 +453,31 @@ export const Channels = () => {
               onClick={() => {
                 setIsCreateModalOpen(false);
                 resetCreate();
-                setLogoFile(null);
+                setImageFile(null);
               }}
             >
               Cancel
             </Button>
             <Button type="submit" isLoading={createMutation.isPending}>
-              Create Channel
+              Create Actor
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Edit Channel Modal */}
+      {/* Edit Actor Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setEditingChannelId(null);
+          setEditingActorId(null);
           resetEdit();
-          setLogoFile(null);
+          setImageFile(null);
         }}
-        title="Edit Channel"
+        title="Edit Actor"
         size="md"
       >
-        {editChannelData?.data && (
+        {editActorData?.data && (
           <form onSubmit={handleSubmitEdit(onEditSubmit)} className="space-y-4">
             <Input
               label="Name *"
@@ -447,6 +490,19 @@ export const Channels = () => {
                 className="input"
                 rows={3}
                 {...registerEdit('Description')}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Date of Birth"
+                type="date"
+                {...registerEdit('DateOfBirth')}
+                error={editErrors.DateOfBirth?.message}
+              />
+              <Input
+                label="Nationality"
+                {...registerEdit('Nationality')}
+                error={editErrors.Nationality?.message}
               />
             </div>
             <Input
@@ -463,15 +519,15 @@ export const Channels = () => {
               />
             </div>
             <FileUpload
-              label="Logo"
+              label="Actor Image"
               accept="image/*"
               maxSize={5}
-              onChange={(files) => setLogoFile(files?.[0] || null)}
+              onChange={(files) => setImageFile(files?.[0] || null)}
               preview={
-                logoFile
-                  ? URL.createObjectURL(logoFile)
-                  : editChannelData.data.Logo
-                  ? editChannelData.data.Logo
+                imageFile
+                  ? URL.createObjectURL(imageFile)
+                  : editActorData.data.Image
+                  ? editActorData.data.Image
                   : undefined
               }
             />
@@ -481,15 +537,15 @@ export const Channels = () => {
                 variant="outline"
                 onClick={() => {
                   setIsEditModalOpen(false);
-                  setEditingChannelId(null);
+                  setEditingActorId(null);
                   resetEdit();
-                  setLogoFile(null);
+                  setImageFile(null);
                 }}
               >
                 Cancel
               </Button>
               <Button type="submit" isLoading={updateMutation.isPending}>
-                Update Channel
+                Update Actor
               </Button>
             </div>
           </form>
@@ -499,24 +555,24 @@ export const Channels = () => {
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, channelId: null })}
-        title="Delete Channel"
+        onClose={() => setDeleteModal({ isOpen: false, actorId: null })}
+        title="Delete Actor"
       >
         <p className="text-gray-600 mb-4">
-          Are you sure you want to delete this channel? This action cannot be undone. The channel logo will also be deleted from storage.
+          Are you sure you want to delete this actor? This action cannot be undone. The actor image will also be deleted from storage.
         </p>
         <div className="flex justify-end space-x-2">
           <Button
             variant="outline"
-            onClick={() => setDeleteModal({ isOpen: false, channelId: null })}
+            onClick={() => setDeleteModal({ isOpen: false, actorId: null })}
           >
             Cancel
           </Button>
           <Button
             variant="danger"
             onClick={() => {
-              if (deleteModal.channelId) {
-                deleteMutation.mutate(deleteModal.channelId);
+              if (deleteModal.actorId) {
+                deleteMutation.mutate(deleteModal.actorId);
               }
             }}
             isLoading={deleteMutation.isPending}
@@ -528,3 +584,4 @@ export const Channels = () => {
     </div>
   );
 };
+

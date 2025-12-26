@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import { useAuth } from '@/hooks/useAuth';
 import {
   HomeIcon,
   FilmIcon,
   FolderIcon,
-  MagnifyingGlassIcon,
   ShieldCheckIcon,
-  GiftIcon,
   Bars3Icon,
   XMarkIcon,
   ChartBarIcon,
+  UserGroupIcon,
+  PhoneIcon,
 } from '@heroicons/react/24/outline';
 
 interface MenuItem {
@@ -18,6 +19,7 @@ interface MenuItem {
   path: string;
   icon: React.ComponentType<{ className?: string }>;
   children?: MenuItem[];
+  requiredPermissions?: string[];
 }
 
 const menuItems: MenuItem[] = [
@@ -30,6 +32,7 @@ const menuItems: MenuItem[] = [
     name: 'Ads Management',
     path: '/ads',
     icon: ChartBarIcon,
+    requiredPermissions: ['ads:view'],
     children: [
       { name: 'Pre-Roll Ads', path: '/ads?type=pre-roll', icon: FilmIcon },
       { name: 'Mid-Roll Ads', path: '/ads?type=mid-roll', icon: FilmIcon },
@@ -45,41 +48,44 @@ const menuItems: MenuItem[] = [
     name: 'Movie Management',
     path: '/movies',
     icon: FilmIcon,
+    requiredPermissions: ['movies:view'],
     children: [
-      { name: 'All Movies', path: '/movies', icon: FilmIcon },
-      { name: 'Upload Queues', path: '/upload-queues', icon: FilmIcon },
+      { name: 'All Movies', path: '/movies', icon: FilmIcon, requiredPermissions: ['movies:view'] },
+      {
+        name: 'Upload Queues',
+        path: '/upload-queues',
+        icon: FilmIcon,
+        requiredPermissions: ['upload-queue:view'],
+      },
+      { name: 'Channels', path: '/channels', icon: FilmIcon, requiredPermissions: ['channels:view'] },
+      { name: 'Actors', path: '/actors', icon: FilmIcon, requiredPermissions: ['actors:view'] },
     ],
   },
   {
     name: 'Categories',
     path: '/categories',
     icon: FolderIcon,
+    requiredPermissions: ['categories:view'],
   },
   {
-    name: 'SEO & Traffic',
-    path: '/seo',
-    icon: MagnifyingGlassIcon,
-    children: [
-      { name: 'Movie SEO Editor', path: '/seo/movie', icon: MagnifyingGlassIcon },
-      { name: 'Sitemap Generator', path: '/seo/sitemap', icon: MagnifyingGlassIcon },
-      { name: 'SEO Analytics', path: '/seo/analytics', icon: ChartBarIcon },
-    ],
+    name: 'Sponsor Contact',
+    path: '/sponsor-contact',
+    icon: PhoneIcon,
+    requiredPermissions: ['contact:read'],
   },
   {
-    name: 'Copyright & Safety',
-    path: '/dmca',
-    icon: ShieldCheckIcon,
-    children: [
-      { name: 'DMCA Takedown', path: '/dmca', icon: ShieldCheckIcon },
-    ],
+    name: 'Withdrawals',
+    path: '/withdrawals',
+    icon: ChartBarIcon,
+    // Main admin only - no requiredPermissions means it's hidden for sub-admins
   },
   {
-    name: 'Promotion & Growth',
-    path: '/referrals',
-    icon: GiftIcon,
+    name: 'Subadmin',
+    path: '/subadmin',
+    icon: UserGroupIcon,
     children: [
-      { name: 'Referral List', path: '/referrals', icon: GiftIcon },
-      { name: 'Referral Stats', path: '/referrals/stats', icon: ChartBarIcon },
+      { name: 'Roles', path: '/subadmin/roles', icon: ShieldCheckIcon },
+      { name: 'Sub-Admins', path: '/subadmin/sub-admins', icon: UserGroupIcon },
     ],
   },
 ];
@@ -92,6 +98,7 @@ interface SidebarProps {
 export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const location = useLocation();
+  const { isSubAdmin, hasAnyPermission } = useAuth();
 
   // Auto-expand parent menus if any child is active
   useEffect(() => {
@@ -178,9 +185,9 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
     if (path.includes('/ads')) return 'from-purple-500 to-purple-600';
     if (path.includes('/movies')) return 'from-pink-500 to-pink-600';
     if (path.includes('/categories') || path.includes('/subcategories') || path.includes('/subsubcategories') || path.includes('/channels')) return 'from-green-500 to-green-600';
-    if (path.includes('/seo')) return 'from-orange-500 to-orange-600';
-    if (path.includes('/dmca')) return 'from-red-500 to-red-600';
-    if (path.includes('/referrals')) return 'from-indigo-500 to-indigo-600';
+    if (path.includes('/sponsor-contact')) return 'from-cyan-500 to-cyan-600';
+    if (path.includes('/withdrawals')) return 'from-amber-500 to-amber-600';
+    if (path.includes('/subadmin')) return 'from-teal-500 to-teal-600';
     return 'from-gray-500 to-gray-600';
   };
 
@@ -189,13 +196,28 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
     if (path.includes('/ads')) return 'text-purple-500';
     if (path.includes('/movies')) return 'text-pink-500';
     if (path.includes('/categories') || path.includes('/subcategories') || path.includes('/subsubcategories') || path.includes('/channels')) return 'text-green-500';
-    if (path.includes('/seo')) return 'text-orange-500';
-    if (path.includes('/dmca')) return 'text-red-500';
-    if (path.includes('/referrals')) return 'text-indigo-500';
+    if (path.includes('/sponsor-contact')) return 'text-cyan-500';
+    if (path.includes('/withdrawals')) return 'text-amber-500';
+    if (path.includes('/subadmin')) return 'text-teal-500';
     return 'text-gray-500';
   };
 
   const renderMenuItem = (item: MenuItem, level = 0) => {
+    // Hide Subadmin section for sub-admin users
+    if (isSubAdmin && item.path.startsWith('/subadmin')) {
+      return null;
+    }
+
+    // Hide Withdrawals for sub-admin users (main admin only)
+    if (isSubAdmin && item.path.startsWith('/withdrawals')) {
+      return null;
+    }
+
+    // Permission-based visibility
+    if (isSubAdmin && item.requiredPermissions && !hasAnyPermission(item.requiredPermissions)) {
+      return null;
+    }
+
     const hasChildren = !!(item.children && item.children.length > 0);
     const isExpanded = expandedItems.includes(item.path);
     const active = isActive(item.path, level, hasChildren);

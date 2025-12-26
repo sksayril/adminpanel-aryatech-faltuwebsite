@@ -8,31 +8,32 @@ import { moviesApi, CreateMovieData } from '@/api/movies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { subcategoriesApi } from '@/api/subcategories.api';
 import { subsubcategoriesApi } from '@/api/subsubcategories.api';
-import { AGE_RESTRICTIONS, COUNTRIES, MOVIE_QUALITIES, SUBTITLE_LANGUAGES } from '@/utils/constants';
+import { MOVIE_QUALITIES, SUBTITLE_LANGUAGES, COUNTRIES, MOVIE_LANGUAGES } from '@/utils/constants';
+import { channelsApi } from '@/api/channels.api';
+import { actorsApi } from '@/api/actors.api';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Switch } from '@/components/ui/Switch';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { SkeletonMovieCard, Skeleton } from '@/components/ui/Skeleton';
 import { showToast } from '@/utils/toast';
+import { useAuth } from '@/hooks/useAuth';
 import { PlusIcon, XMarkIcon, CheckCircleIcon, XCircleIcon, ClockIcon, Squares2X2Icon, TableCellsIcon, FilmIcon } from '@heroicons/react/24/outline';
 
 const createMovieSchema = z.object({
   Title: z.string().min(1, 'Title is required'),
   Category: z.string().min(1, 'Category is required'),
+  Country: z.string().min(1, 'Country is required'),
+  Language: z.string().min(1, 'Language is required'),
   Description: z.string().optional(),
   SubCategory: z.string().optional(),
   SubSubCategory: z.string().optional(),
   Channel: z.string().optional(),
   MetaTitle: z.string().optional(),
   MetaDescription: z.string().optional(),
-  AgeRestriction: z.string().optional(),
-  Year: z.number().optional(),
-  ReleaseDate: z.string().optional(),
-  Director: z.string().optional(),
-  TrailerUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   sourceQuality: z.string().optional(),
   IsPremium: z.boolean().optional(),
 });
@@ -42,7 +43,6 @@ type CreateMovieFormData = z.infer<typeof createMovieSchema> & {
   Cast?: string[];
   Tags?: string[];
   MetaKeywords?: string[];
-  BlockedCountries?: string[];
 };
 
 type MovieFilter = 'all' | 'trending' | 'featured';
@@ -51,7 +51,11 @@ type ViewMode = 'grid' | 'table';
 export const MoviesList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeFilter = (searchParams.get('filter') as MovieFilter) || 'all';
-  
+
+  const { isSubAdmin, hasPermission } = useAuth();
+  const canCreateMovie = !isSubAdmin || hasPermission('movies:create');
+  const canEditMovie = !isSubAdmin || hasPermission('movies:edit');
+  const canDeleteMovie = !isSubAdmin || hasPermission('movies:delete');
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -72,13 +76,11 @@ export const MoviesList = () => {
   const [subtitle, setSubtitle] = useState<File | null>(null);
   const [subtitleLanguage, setSubtitleLanguage] = useState<string>('');
   const [subtitleLanguageCode, setSubtitleLanguageCode] = useState<string>('');
-  const [blockedCountries, setBlockedCountries] = useState<string[]>([]);
   const [genre, setGenre] = useState<string[]>([]);
-  const [cast, setCast] = useState<string[]>([]);
+  const [cast, setCast] = useState<string[]>([]); // Now stores Actor IDs
   const [tags, setTags] = useState<string[]>([]);
   const [metaKeywords, setMetaKeywords] = useState<string[]>([]);
   const [genreInput, setGenreInput] = useState<string>('');
-  const [castInput, setCastInput] = useState<string>('');
   const [tagsInput, setTagsInput] = useState<string>('');
   const [metaKeywordsInput, setMetaKeywordsInput] = useState<string>('');
 
@@ -102,6 +104,18 @@ export const MoviesList = () => {
     queryFn: () => categoriesApi.getAll(),
   });
 
+  // Fetch channels
+  const { data: channelsData } = useQuery({
+    queryKey: ['channels'],
+    queryFn: () => channelsApi.getAll({ isActive: true }),
+  });
+
+  // Fetch actors
+  const { data: actorsData } = useQuery({
+    queryKey: ['actors'],
+    queryFn: () => actorsApi.getAll({ isActive: true, limit: 1000 }), // Get all active actors
+  });
+
   const {
     register,
     handleSubmit,
@@ -115,6 +129,16 @@ export const MoviesList = () => {
 
   const watchedCategory = watch('Category');
   const watchedSubCategory = watch('SubCategory');
+
+  // Helper to render flag emoji from country code (e.g., US -> 🇺🇸)
+  const getFlagEmoji = (countryCode: string) => {
+    if (!countryCode) return '';
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map((char) => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  };
 
   // Fetch subcategories based on selected category
   const { data: subCategoriesData } = useQuery({
@@ -157,13 +181,11 @@ export const MoviesList = () => {
       setSubtitle(null);
       setSubtitleLanguage('');
       setSubtitleLanguageCode('');
-      setBlockedCountries([]);
       setGenre([]);
       setCast([]);
       setTags([]);
       setMetaKeywords([]);
       setGenreInput('');
-      setCastInput('');
       setTagsInput('');
       setMetaKeywordsInput('');
 
@@ -282,6 +304,10 @@ export const MoviesList = () => {
   });
 
   const handleDelete = (id: string) => {
+    if (!canDeleteMovie) {
+      showToast.error('You do not have permission to delete movies. Please contact the administrator.');
+      return;
+    }
     deleteMutation.mutate(id);
   };
 
@@ -305,6 +331,8 @@ export const MoviesList = () => {
     const formData: CreateMovieData = {
       Title: data.Title,
       Category: data.Category,
+      Country: data.Country,
+      Language: data.Language,
       Description: data.Description,
       SubCategory: data.SubCategory,
       SubSubCategory: data.SubSubCategory,
@@ -313,14 +341,8 @@ export const MoviesList = () => {
       MetaDescription: data.MetaDescription,
       MetaKeywords: metaKeywords.length > 0 ? metaKeywords : undefined,
       Tags: tags.length > 0 ? tags : undefined,
-      AgeRestriction: data.AgeRestriction,
       Genre: genre.length > 0 ? genre : undefined,
       Cast: cast.length > 0 ? cast : undefined,
-      Director: data.Director,
-      Year: data.Year,
-      ReleaseDate: data.ReleaseDate,
-      BlockedCountries: blockedCountries.length > 0 ? blockedCountries : undefined,
-      TrailerUrl: data.TrailerUrl,
       IsPremium: data.IsPremium || false,
       sourceQuality: data.sourceQuality || '1080p',
       thumbnail: thumbnail || undefined,
@@ -391,10 +413,12 @@ export const MoviesList = () => {
               <TableCellsIcon className="h-5 w-5" />
             </button>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Upload New Movie
-          </Button>
+          {canCreateMovie && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Upload New Movie
+            </Button>
+          )}
         </div>
       </div>
 
@@ -488,16 +512,20 @@ export const MoviesList = () => {
               <Link to={`/movies/${movie._id}`} className="flex-1">
                 <Button variant="outline" size="sm" className="w-full">View</Button>
               </Link>
-              <Link to={`/movies/${movie._id}/edit`} className="flex-1">
-                <Button variant="outline" size="sm" className="w-full">Edit</Button>
-              </Link>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setDeleteModal({ isOpen: true, movieId: movie._id })}
-              >
-                Delete
-              </Button>
+              {canEditMovie && (
+                <Link to={`/movies/${movie._id}/edit`} className="flex-1">
+                  <Button variant="outline" size="sm" className="w-full">Edit</Button>
+                </Link>
+              )}
+              {canDeleteMovie && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setDeleteModal({ isOpen: true, movieId: movie._id })}
+                >
+                  Delete
+                </Button>
+              )}
             </div>
           </div>
         ))}
@@ -681,13 +709,11 @@ export const MoviesList = () => {
           setSubtitle(null);
           setSubtitleLanguage('');
           setSubtitleLanguageCode('');
-          setBlockedCountries([]);
           setGenre([]);
           setCast([]);
           setTags([]);
           setMetaKeywords([]);
           setGenreInput('');
-          setCastInput('');
           setTagsInput('');
           setMetaKeywordsInput('');
         }}
@@ -732,39 +758,37 @@ export const MoviesList = () => {
                 {...register('SubSubCategory')}
                 disabled={!watchedSubCategory}
               />
-              <Input
-                label="Year"
-                type="number"
-                {...register('Year', { valueAsNumber: true })}
-                error={errors.Year?.message}
-                placeholder="2024"
+              <Select
+                label="Channel"
+                options={[
+                  { value: '', label: 'Select Channel (Optional)' },
+                  ...(channelsData?.data?.map((channel) => ({ value: channel._id, label: channel.Name })) || []),
+                ]}
+                {...register('Channel')}
               />
               <Select
-                label="Age Restriction"
+                label="Country *"
                 options={[
-                  { value: '', label: 'Select Age Restriction' },
-                  ...AGE_RESTRICTIONS.map((age) => ({ value: age.value, label: age.label })),
+                  { value: '', label: 'Select Country' },
+                  ...COUNTRIES.map((country) => ({
+                    value: country.code,
+                    label: `${getFlagEmoji(country.code)} ${country.name} (${country.code})`,
+                  })),
                 ]}
-                {...register('AgeRestriction')}
+                {...register('Country')}
+                error={errors.Country?.message}
               />
-              <Input
-                label="Director"
-                {...register('Director')}
-                error={errors.Director?.message}
-                placeholder="Director Name"
-              />
-              <Input
-                label="Release Date"
-                type="date"
-                {...register('ReleaseDate')}
-                error={errors.ReleaseDate?.message}
-              />
-              <Input
-                label="Trailer URL"
-                type="url"
-                {...register('TrailerUrl')}
-                error={errors.TrailerUrl?.message}
-                placeholder="https://youtube.com/watch?v=trailer"
+              <Select
+                label="Language *"
+                options={[
+                  { value: '', label: 'Select Language' },
+                  ...MOVIE_LANGUAGES.map((lang) => ({
+                    value: lang.code,
+                    label: lang.name,
+                  })),
+                ]}
+                {...register('Language')}
+                error={errors.Language?.message}
               />
               <Select
                 label="Source Quality"
@@ -920,41 +944,20 @@ export const MoviesList = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Cast</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {cast.map((c) => (
-                  <span key={c} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-pink-100 text-pink-800">
-                    {c}
-                    <button
-                      type="button"
-                      onClick={() => removeFromArray(cast, setCast, c)}
-                      className="ml-2 text-pink-600 hover:text-pink-800"
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={castInput}
-                  onChange={(e) => setCastInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addToArray(cast, setCast, castInput, setCastInput);
-                    }
-                  }}
-                  placeholder="Add cast member"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addToArray(cast, setCast, castInput, setCastInput)}
-                >
-                  Add
-                </Button>
-              </div>
+              <MultiSelect
+                label="Cast (Actors)"
+                options={
+                  actorsData?.data?.map((actor) => ({
+                    value: actor._id,
+                    label: actor.Name,
+                    image: actor.Image,
+                  })) || []
+                }
+                value={cast}
+                onChange={setCast}
+                placeholder="Select actors"
+                searchPlaceholder="Search actors..."
+              />
             </div>
           </div>
 
@@ -1017,18 +1020,6 @@ export const MoviesList = () => {
                 onChange={(checked) => setValue('IsPremium', checked)}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Blocked Countries</label>
-              <Select
-                multiple
-                options={COUNTRIES.map((country) => ({ value: country.code, label: country.name }))}
-                value={blockedCountries}
-                onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions, (option) => option.value);
-                  setBlockedCountries(selected);
-                }}
-              />
-            </div>
           </div>
 
           <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 sticky bottom-0 bg-white pb-2 mt-6">
@@ -1044,13 +1035,11 @@ export const MoviesList = () => {
                 setSubtitle(null);
                 setSubtitleLanguage('');
                 setSubtitleLanguageCode('');
-                setBlockedCountries([]);
                 setGenre([]);
                 setCast([]);
                 setTags([]);
                 setMetaKeywords([]);
                 setGenreInput('');
-                setCastInput('');
                 setTagsInput('');
                 setMetaKeywordsInput('');
               }}

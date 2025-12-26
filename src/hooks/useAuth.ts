@@ -28,10 +28,29 @@ export const useAuth = () => {
     navigate('/login');
   };
 
+  const isSubAdmin = !!user?.IsSubAdmin;
+  const permissions = user?.Permissions || [];
+
+  const hasPermission = (permission: string) => {
+    // Super admin: full access
+    if (!isSubAdmin) return true;
+    if (!permission) return true;
+    return permissions.includes(permission);
+  };
+
+  const hasAnyPermission = (required: string[] | undefined) => {
+    if (!required || required.length === 0) return true;
+    return required.some((perm) => hasPermission(perm));
+  };
+
   return {
     token,
     user,
     isAuthenticated,
+    isSubAdmin,
+    permissions,
+    hasPermission,
+    hasAnyPermission,
     logout: handleLogout,
   };
 };

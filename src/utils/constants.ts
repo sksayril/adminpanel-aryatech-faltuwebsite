@@ -79,6 +79,12 @@ export const SUBTITLE_LANGUAGES = [
   { code: 'tr', name: 'Turkish' },
 ] as const;
 
+// Primary movie audio languages (can be extended later)
+export const MOVIE_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'hi', name: 'Hindi' },
+] as const;
+
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'admin_token',
   USER: 'admin_user',

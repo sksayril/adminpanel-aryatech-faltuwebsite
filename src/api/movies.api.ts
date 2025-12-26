@@ -10,7 +10,14 @@ export interface Movie {
   Category: string | { _id: string; Name: string; Slug: string };
   SubCategory?: string | { _id: string; Name: string; Slug?: string } | null;
   SubSubCategory?: string | { _id: string; Name: string; Slug?: string } | null;
-  Channel?: string | { _id: string; Name: string };
+  Channel?: string | {
+    _id: string;
+    Name: string;
+    Slug: string;
+    Logo?: string;
+    Description?: string;
+    IsActive: boolean;
+  };
   Status: string;
   IsTrending: boolean;
   IsFeatured: boolean;
@@ -41,7 +48,15 @@ export interface Movie {
   MetaKeywords?: string[];
   Tags?: string[];
   Genre?: string[];
-  Cast?: string[];
+  Cast?: string[] | Array<{
+    _id: string;
+    Name: string;
+    Description?: string;
+    Image?: string;
+    DateOfBirth?: string;
+    Nationality?: string;
+    Slug?: string;
+  }>;
   Director?: string;
   Year?: number;
   ReleaseDate?: string;
@@ -59,22 +74,23 @@ export interface Movie {
 export interface CreateMovieData {
   Title: string;
   Category: string;
+  Country?: string;
+  Language?: string;
   Description?: string;
   SubCategory?: string;
   SubSubCategory?: string;
   Channel?: string;
+  AgeRestriction?: string;
+  Director?: string;
+  ReleaseDate?: string;
+  BlockedCountries?: string[];
+  TrailerUrl?: string;
   MetaTitle?: string;
   MetaDescription?: string;
   MetaKeywords?: string[];
   Tags?: string[];
-  AgeRestriction?: string;
   Genre?: string[];
   Cast?: string[];
-  Director?: string;
-  Year?: number;
-  ReleaseDate?: string;
-  BlockedCountries?: string[];
-  TrailerUrl?: string;
   IsPremium?: boolean;
   sourceQuality?: string;
   thumbnail?: File;
@@ -165,7 +181,6 @@ export const moviesApi = {
       formData.append('Cast', JSON.stringify(data.Cast));
     }
     if (data.Director) formData.append('Director', data.Director);
-    if (data.Year) formData.append('Year', data.Year.toString());
     if (data.ReleaseDate) formData.append('ReleaseDate', data.ReleaseDate);
     if (data.BlockedCountries && data.BlockedCountries.length > 0) {
       formData.append('BlockedCountries', JSON.stringify(data.BlockedCountries));

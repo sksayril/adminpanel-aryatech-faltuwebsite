@@ -2,11 +2,20 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from '@/utils/constants';
 
-interface User {
+export interface User {
   _id: string;
   Name: string;
   Email: string;
   Role: string;
+  // Optional sub-admin specific fields
+  IsSubAdmin?: boolean;
+  Roles?: Array<{
+    _id: string;
+    Name: string;
+    Slug: string;
+    Description?: string;
+  }>;
+  Permissions?: string[];
 }
 
 interface AuthState {

@@ -21,6 +21,7 @@ export const Login = () => {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [loginType, setLoginType] = useState<'super' | 'sub'>('super');
 
   const {
     register,
@@ -38,20 +39,33 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await authApi.login({
+      const credentials = {
         Email: data.Email,
         Password: data.Password,
-      });
-      
+      };
+
+      const response =
+        loginType === 'super' ? await authApi.login(credentials) : await authApi.loginSubAdmin(credentials);
+
       if (response.success && response.data.token && response.data.user) {
+        const permsFromUser =
+          response.data.user.Permissions || response.data.access?.permissions || [];
+
         // Store token in localStorage and Zustand store
         setAuth(response.data.token, {
           _id: response.data.user._id,
           Name: response.data.user.Name,
           Email: response.data.user.Email,
           Role: response.data.user.Role,
+          IsSubAdmin: loginType === 'sub' || response.data.user.IsSubAdmin,
+          Roles: response.data.user.Roles || response.data.access?.roles,
+          Permissions: permsFromUser,
         });
-        showToast.success('Login successful! Welcome back.');
+        showToast.success(
+          loginType === 'super'
+            ? 'Super admin login successful!'
+            : 'Sub-admin login successful!'
+        );
         navigate('/dashboard');
       }
     } catch (err: any) {
@@ -88,7 +102,7 @@ export const Login = () => {
             Movie Streaming Platform
           </h1>
           <h2 className="mt-4 text-2xl font-bold text-white">
-            Admin Panel Login
+            {loginType === 'super' ? 'Super Admin Login' : 'Sub-Admin Login'}
           </h2>
           <p className="mt-2 text-sm text-purple-200 flex items-center justify-center gap-2">
             <StarIcon className="h-4 w-4" />
@@ -98,6 +112,32 @@ export const Login = () => {
 
         {/* Login Card */}
         <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
+          {/* Login type toggle */}
+          <div className="mb-6 flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => setLoginType('super')}
+              className={`flex-1 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                loginType === 'super'
+                  ? 'bg-white text-purple-700 border-white shadow'
+                  : 'bg-transparent text-purple-100 border-white/30 hover:bg-white/10'
+              }`}
+            >
+              Super Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginType('sub')}
+              className={`flex-1 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                loginType === 'sub'
+                  ? 'bg-white text-purple-700 border-white shadow'
+                  : 'bg-transparent text-purple-100 border-white/30 hover:bg-white/10'
+              }`}
+            >
+              Sub Admin
+            </button>
+          </div>
+
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-5">
               {/* Email Input */}
