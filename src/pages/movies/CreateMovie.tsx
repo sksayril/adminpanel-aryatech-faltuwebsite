@@ -80,7 +80,6 @@ export const CreateMovie = () => {
       MetaTitle: data.MetaTitle,
       MetaDescription: data.MetaDescription,
       AgeRestriction: data.AgeRestriction,
-      Year: data.Year,
       ReleaseDate: data.ReleaseDate,
       Director: data.Director,
       TrailerUrl: data.TrailerUrl,

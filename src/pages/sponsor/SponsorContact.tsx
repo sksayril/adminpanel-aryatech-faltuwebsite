@@ -20,10 +20,8 @@ import {
   BuildingOfficeIcon,
   EyeIcon,
   ChatBubbleLeftRightIcon,
-  ChartBarIcon,
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon,
   ArchiveBoxIcon,
 } from '@heroicons/react/24/outline';
 
@@ -702,7 +700,7 @@ export const SponsorContact = () => {
             </div>
           </div>
         ) : (
-          <Skeleton variant="rect" height={400} />
+          <Skeleton variant="rectangular" height={400} />
         )}
       </Modal>
 

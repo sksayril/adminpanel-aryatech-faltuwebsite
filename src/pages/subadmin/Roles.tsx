@@ -3,14 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { rolesApi, CreateRoleData, Role, PermissionsResponse } from '@/api/roles.api';
+import { rolesApi, CreateRoleData } from '@/api/roles.api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Switch } from '@/components/ui/Switch';
 import { SkeletonTable, Skeleton } from '@/components/ui/Skeleton';
 import { showToast } from '@/utils/toast';
-import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const createRoleSchema = z.object({
   Name: z.string().min(1, 'Role name is required'),
@@ -211,7 +211,7 @@ export const Roles = () => {
     });
   };
 
-  const toggleCategoryPermissions = (category: string, permissions: string[]) => {
+  const toggleCategoryPermissions = (_category: string, permissions: string[]) => {
     const allSelected = permissions.every((p) => selectedPermissions.includes(p));
     if (allSelected) {
       const newPerms = selectedPermissions.filter((p) => !permissions.includes(p));
@@ -487,7 +487,7 @@ export const Roles = () => {
                   );
                 })
               ) : (
-                <Skeleton variant="rect" height={200} />
+                <Skeleton variant="rectangular" height={200} />
               )}
             </div>
             <p className="text-sm text-gray-500 mt-2">
@@ -587,7 +587,7 @@ export const Roles = () => {
                   );
                 })
               ) : (
-                <Skeleton variant="rect" height={200} />
+                <Skeleton variant="rectangular" height={200} />
               )}
             </div>
             <p className="text-sm text-gray-500 mt-2">

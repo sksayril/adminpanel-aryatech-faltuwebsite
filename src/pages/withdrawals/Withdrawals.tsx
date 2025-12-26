@@ -14,7 +14,6 @@ import {
   MagnifyingGlassIcon,
   EyeIcon,
   CheckCircleIcon,
-  XCircleIcon,
   ClockIcon,
   CurrencyDollarIcon,
   BanknotesIcon,

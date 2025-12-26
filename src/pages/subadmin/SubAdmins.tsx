@@ -92,7 +92,6 @@ export const SubAdmins = () => {
     handleSubmit: handleSubmitCreate,
     formState: { errors: createErrors },
     reset: resetCreate,
-    watch: watchCreate,
   } = useForm<CreateSubAdminFormData>({
     resolver: zodResolver(createSubAdminSchema),
   });
