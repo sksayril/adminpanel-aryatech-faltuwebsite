@@ -1,5 +1,6 @@
 // export const API_BASE_URL = 'http://localhost:3100/api/admin';
-export const API_BASE_URL = 'https://7cvccltb-3100.inc1.devtunnels.ms/api/admin';
+// export const API_BASE_URL = 'https://7cvccltb-3100.inc1.devtunnels.ms/api/admin';
+export const API_BASE_URL = 'https://api.xhamster01.com/api/admin';
 
 export const AD_TYPES = [
   { value: 'pre-roll', label: 'Pre-Roll' },
