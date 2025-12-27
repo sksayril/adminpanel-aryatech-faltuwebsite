@@ -138,12 +138,14 @@ export const Categories = () => {
   // Build tree structure
   const categoryTree: CategoryTreeItem[] = (categoriesData?.data || []).map((category) => {
     const subCategories = (subCategoriesData?.data || []).filter((subCat) => {
+      if (!subCat.Category) return false;
       const categoryId = typeof subCat.Category === 'string' ? subCat.Category : subCat.Category._id;
       return categoryId === category._id;
     });
 
     const subCategoriesWithSubSub = subCategories.map((subCat) => {
       const subSubCategories = (subSubCategoriesData?.data || []).filter((subSubCat) => {
+        if (!subSubCat.SubCategory) return false;
         const subCategoryId = typeof subSubCat.SubCategory === 'string' ? subSubCat.SubCategory : subSubCat.SubCategory._id;
         return subCategoryId === subCat._id;
       });
@@ -166,6 +168,7 @@ export const Categories = () => {
   useEffect(() => {
     if (editSubCategoryData?.data && isEditSubCategoryModalOpen) {
       const subCategory = editSubCategoryData.data;
+      if (!subCategory.Category) return;
       const categoryId = typeof subCategory.Category === 'string' ? subCategory.Category : subCategory.Category._id;
       setSubCategoryValue('Name', subCategory.Name);
       setSubCategoryValue('Category', categoryId);
@@ -177,6 +180,7 @@ export const Categories = () => {
   useEffect(() => {
     if (editSubSubCategoryData?.data && isEditSubSubCategoryModalOpen) {
       const subSubCategory = editSubSubCategoryData.data;
+      if (!subSubCategory.SubCategory) return;
       const subCategoryId = typeof subSubCategory.SubCategory === 'string' ? subSubCategory.SubCategory : subSubCategory.SubCategory._id;
       setSubSubCategoryValue('Name', subSubCategory.Name);
       setSubSubCategoryValue('SubCategory', subCategoryId);
