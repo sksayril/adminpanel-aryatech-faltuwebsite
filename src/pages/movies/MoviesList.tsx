@@ -4,7 +4,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { moviesApi, CreateMovieData } from '@/api/movies.api';
+import {
+  moviesApi,
+  CreateMovieData,
+  Movie,
+  MovieQueueUploadProgress,
+  MovieLegacyUploadProgress,
+} from '@/api/movies.api';
 import { categoriesApi } from '@/api/categories.api';
 import { subcategoriesApi } from '@/api/subcategories.api';
 import { subsubcategoriesApi } from '@/api/subsubcategories.api';
@@ -47,6 +53,77 @@ type CreateMovieFormData = z.infer<typeof createMovieSchema> & {
 
 type MovieFilter = 'all' | 'trending' | 'featured';
 type ViewMode = 'grid' | 'table';
+type UploadCtx = { kind: 'queue'; movieId: string } | { kind: 'legacy'; uploadId: string };
+type MovieUploadMode = 'queue' | 'immediate';
+
+type NormalizedUploadProgress = {
+  overallProgress: number;
+  status: string;
+  totalJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  jobs: Array<{
+    _id: string;
+    fileName: string;
+    fileType: string;
+    progress: number;
+    status: string;
+    uploadedSize: number;
+    totalSize: number;
+    error?: string | null;
+  }>;
+  uploadLimits?: MovieQueueUploadProgress['uploadLimits'];
+  kind: MovieUploadMode | 'legacy-progress';
+};
+
+function normalizeUploadProgress(
+  raw: MovieQueueUploadProgress | MovieLegacyUploadProgress,
+  source: 'queue' | 'legacy'
+): NormalizedUploadProgress {
+  if (source === 'queue') {
+    const r = raw as MovieQueueUploadProgress;
+    return {
+      overallProgress: r.overallProgress,
+      status: r.status,
+      totalJobs: r.totalJobs,
+      completedJobs: r.completedJobs,
+      failedJobs: r.failedJobs,
+      uploadLimits: r.uploadLimits,
+      kind: 'queue',
+      jobs: (r.jobs || []).map((j) => ({
+        _id: j._id,
+        fileName: j.fileName,
+        fileType: j.fileType,
+        progress: j.progress ?? 0,
+        status: j.status,
+        uploadedSize: j.uploadedSize ?? 0,
+        totalSize: j.totalSize ?? 0,
+        error: j.error ?? null,
+      })),
+    };
+  }
+  const legacy = raw as MovieLegacyUploadProgress;
+  const files = legacy.files || [];
+  return {
+    overallProgress: legacy.overallProgress,
+    status: legacy.status,
+    totalJobs: files.length,
+    completedJobs: files.filter((f) => f.status === 'completed').length,
+    failedJobs: files.filter((f) => f.status === 'failed').length,
+    uploadLimits: legacy.uploadLimits,
+    kind: 'legacy-progress',
+    jobs: files.map((f) => ({
+      _id: f.uploadId,
+      fileName: f.fileName,
+      fileType: f.fileType,
+      progress: f.progress ?? 0,
+      status: f.status,
+      uploadedSize: f.uploadedSize ?? 0,
+      totalSize: f.totalSize ?? 0,
+      error: f.error,
+    })),
+  };
+}
 
 export const MoviesList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,8 +138,22 @@ export const MoviesList = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadProgressModalOpen, setIsUploadProgressModalOpen] = useState(false);
-  const [uploadingMovieId, setUploadingMovieId] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<any>(null);
+  const [uploadCtx, setUploadCtx] = useState<UploadCtx | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<NormalizedUploadProgress | null>(null);
+  const [movieUploadMode, setMovieUploadMode] = useState<MovieUploadMode>('queue');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [categoryIdFilter, setCategoryIdFilter] = useState('');
+  const [isPremiumFilter, setIsPremiumFilter] = useState('');
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+    return () => window.clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, categoryIdFilter, isPremiumFilter, statusFilter, activeFilter]);
   const progressIntervalRef = useRef<number | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; movieId: string | null }>({
     isOpen: false,
@@ -75,7 +166,6 @@ export const MoviesList = () => {
   const [video, setVideo] = useState<File | null>(null);
   const [subtitle, setSubtitle] = useState<File | null>(null);
   const [subtitleLanguage, setSubtitleLanguage] = useState<string>('');
-  const [subtitleLanguageCode, setSubtitleLanguageCode] = useState<string>('');
   const [genre, setGenre] = useState<string[]>([]);
   const [cast, setCast] = useState<string[]>([]); // Now stores Actor IDs
   const [tags, setTags] = useState<string[]>([]);
@@ -87,12 +177,16 @@ export const MoviesList = () => {
   const queryClient = useQueryClient();
 
   // Build query params based on active filter
-  const queryParams: any = { status: statusFilter, page, limit: 20 };
+  const queryParams: Record<string, string | number> = { page, limit: 20 };
+  if (statusFilter) queryParams.status = statusFilter;
   if (activeFilter === 'trending') {
     queryParams.isTrending = 'true';
   } else if (activeFilter === 'featured') {
     queryParams.isFeatured = 'true';
   }
+  if (debouncedSearch) queryParams.search = debouncedSearch;
+  if (categoryIdFilter) queryParams.category = categoryIdFilter;
+  if (isPremiumFilter) queryParams.isPremium = isPremiumFilter;
 
   const { data, isLoading } = useQuery({
     queryKey: ['movies', queryParams],
@@ -169,10 +263,22 @@ export const MoviesList = () => {
     }
   }, [watchedSubCategory, setValue]);
 
+  type CreateMovieMutationResult =
+    | Awaited<ReturnType<typeof moviesApi.queueUpload>>
+    | Awaited<ReturnType<typeof moviesApi.uploadImmediate>>;
+
   const createMutation = useMutation({
-    mutationFn: (data: CreateMovieData) => moviesApi.create(data),
-    onSuccess: (data) => {
-      // Close create modal and reset form
+    mutationFn: async ({
+      mode,
+      body,
+    }: {
+      mode: MovieUploadMode;
+      body: CreateMovieData;
+    }): Promise<CreateMovieMutationResult> => {
+      if (mode === 'queue') return moviesApi.queueUpload(body);
+      return moviesApi.uploadImmediate(body);
+    },
+    onSuccess: (data, variables) => {
       setIsCreateModalOpen(false);
       reset();
       setThumbnail(null);
@@ -180,7 +286,6 @@ export const MoviesList = () => {
       setVideo(null);
       setSubtitle(null);
       setSubtitleLanguage('');
-      setSubtitleLanguageCode('');
       setGenre([]);
       setCast([]);
       setTags([]);
@@ -189,18 +294,27 @@ export const MoviesList = () => {
       setTagsInput('');
       setMetaKeywordsInput('');
 
-      // Start tracking upload progress if movie ID is returned
-      const responseData = data.data as any;
-      if (responseData.movie?._id) {
-        setUploadingMovieId(responseData.movie._id);
+      if (variables.mode === 'queue' && 'movie' in data.data && data.data.movie?._id) {
+        setUploadCtx({ kind: 'queue', movieId: data.data.movie._id });
         setIsUploadProgressModalOpen(true);
         startProgressTracking();
         showToast.success(data.message || 'Movie created and files queued for upload');
-      } else {
-        // If no movie ID, just show success and refresh
-        queryClient.invalidateQueries({ queryKey: ['movies'] });
-        showToast.success(data.message || 'Movie created successfully!');
+        return;
       }
+
+      if (variables.mode === 'immediate') {
+        const uploadId = (data.data as Movie).uploadId;
+        if (uploadId) {
+          setUploadCtx({ kind: 'legacy', uploadId });
+          setIsUploadProgressModalOpen(true);
+          startProgressTracking();
+          showToast.success(data.message || 'Movie created; tracking upload progress');
+          return;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
+      showToast.success(data.message || 'Movie created successfully!');
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to create movie';
@@ -208,44 +322,50 @@ export const MoviesList = () => {
     },
   });
 
-  // Fetch upload progress
   const { data: progressData, refetch: refetchProgress } = useQuery({
-    queryKey: ['upload-progress', uploadingMovieId],
-    queryFn: () => moviesApi.getUploadProgress(uploadingMovieId!),
-    enabled: !!uploadingMovieId && isUploadProgressModalOpen,
-    refetchInterval: (query) => {
-      const data = query.state.data?.data;
-      if (data?.status === 'completed' || data?.status === 'failed' || data?.status === 'no-jobs') {
-        return false; // Stop polling when completed, failed, or no jobs
+    queryKey: ['movie-upload-progress', uploadCtx],
+    queryFn: async () => {
+      if (!uploadCtx) throw new Error('No upload context');
+      if (uploadCtx.kind === 'queue') {
+        return moviesApi.getUploadProgress(uploadCtx.movieId);
       }
-      return 2000; // Poll every 2 seconds
+      return moviesApi.getLegacyUploadProgress(uploadCtx.uploadId);
+    },
+    enabled: !!uploadCtx && isUploadProgressModalOpen,
+    refetchInterval: (query) => {
+      const status = query.state.data?.data?.status;
+      if (status === 'completed' || status === 'failed' || status === 'no-jobs') {
+        return false;
+      }
+      return 2000;
     },
   });
 
   useEffect(() => {
-    if (progressData?.data) {
-      setUploadProgress(progressData.data);
-      
-      // If upload is completed, refresh movies list and close modal
-      if (progressData.data.status === 'completed') {
-        queryClient.invalidateQueries({ queryKey: ['movies'] });
-        showToast.success('Movie uploaded and processed successfully!');
-        // Close modal after 2 seconds
-        setTimeout(() => {
-          setIsUploadProgressModalOpen(false);
-          setUploadingMovieId(null);
-          setUploadProgress(null);
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-            progressIntervalRef.current = null;
-          }
-        }, 2000);
-      } else if (progressData.data.status === 'failed') {
-        showToast.error('Upload or processing failed. Please try again.');
-        // Keep modal open so user can see the error
-      }
+    if (!progressData?.data || !uploadCtx) return;
+
+    const normalized = normalizeUploadProgress(
+      progressData.data,
+      uploadCtx.kind === 'queue' ? 'queue' : 'legacy'
+    );
+    setUploadProgress(normalized);
+
+    if (progressData.data.status === 'completed') {
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
+      showToast.success('Movie uploaded and processed successfully!');
+      setTimeout(() => {
+        setIsUploadProgressModalOpen(false);
+        setUploadCtx(null);
+        setUploadProgress(null);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+      }, 2000);
+    } else if (progressData.data.status === 'failed') {
+      showToast.error('Upload or processing failed. Please try again.');
     }
-  }, [progressData, queryClient]);
+  }, [progressData, queryClient, uploadCtx]);
 
   const startProgressTracking = () => {
     // Clear any existing interval
@@ -323,10 +443,20 @@ export const MoviesList = () => {
   };
 
   const onMovieSubmit = async (data: CreateMovieFormData) => {
-    if (!video) {
-      showToast.error('Please upload a video file');
+    if (movieUploadMode === 'immediate' && !video) {
+      showToast.error('Immediate upload requires a video file');
       return;
     }
+    if (video && !thumbnail) {
+      showToast.error('When uploading a video, a thumbnail is required in the same request');
+      return;
+    }
+    if (subtitle && !subtitleLanguage) {
+      showToast.error('Select a language for the subtitle file');
+      return;
+    }
+
+    const subMeta = SUBTITLE_LANGUAGES.find((l) => l.code === subtitleLanguage);
 
     const formData: CreateMovieData = {
       Title: data.Title,
@@ -349,11 +479,11 @@ export const MoviesList = () => {
       poster: poster || undefined,
       video: video || undefined,
       subtitle: subtitle || undefined,
-      subtitleLanguages: subtitleLanguage ? [subtitleLanguage] : undefined,
-      subtitleLanguageCodes: subtitleLanguageCode ? [subtitleLanguageCode] : undefined,
+      subtitleLanguages: subtitle && subMeta ? [subMeta.name] : undefined,
+      subtitleLanguageCodes: subtitle && subMeta ? [subMeta.code] : undefined,
     };
 
-    createMutation.mutate(formData);
+    createMutation.mutate({ mode: movieUploadMode, body: formData });
   };
 
   const setFilter = (filter: MovieFilter) => {
@@ -445,19 +575,46 @@ export const MoviesList = () => {
       </div>
 
       {/* Filters */}
-      <div className="card">
-        <Select
-          label="Filter by Status"
-          options={[
-            { value: '', label: 'All Status' },
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-            { value: 'blocked', label: 'Blocked' },
-            { value: 'dmca', label: 'DMCA' },
-          ]}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        />
+      <div className="card space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Input
+            label="Search title"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Type to search…"
+          />
+          <Select
+            label="Category"
+            options={[
+              { value: '', label: 'All categories' },
+              ...(categoriesData?.data?.map((cat) => ({ value: cat._id, label: cat.Name })) || []),
+            ]}
+            value={categoryIdFilter}
+            onChange={(e) => setCategoryIdFilter(e.target.value)}
+          />
+          <Select
+            label="Premium"
+            options={[
+              { value: '', label: 'All' },
+              { value: 'true', label: 'Premium only' },
+              { value: 'false', label: 'Free only' },
+            ]}
+            value={isPremiumFilter}
+            onChange={(e) => setIsPremiumFilter(e.target.value)}
+          />
+          <Select
+            label="Status"
+            options={[
+              { value: '', label: 'All Status' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+              { value: 'blocked', label: 'Blocked' },
+              { value: 'dmca', label: 'DMCA' },
+            ]}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Movies Grid View */}
@@ -708,7 +865,6 @@ export const MoviesList = () => {
           setVideo(null);
           setSubtitle(null);
           setSubtitleLanguage('');
-          setSubtitleLanguageCode('');
           setGenre([]);
           setCast([]);
           setTags([]);
@@ -721,6 +877,36 @@ export const MoviesList = () => {
         size="xl"
       >
         <form onSubmit={handleSubmit(onMovieSubmit)} className="space-y-8 max-h-[85vh] overflow-y-auto px-1">
+          <div className="space-y-3 bg-blue-50 border border-blue-100 rounded-lg p-4">
+            <p className="text-sm font-medium text-gray-900">Upload strategy</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="movieUploadMode"
+                  checked={movieUploadMode === 'queue'}
+                  onChange={() => setMovieUploadMode('queue')}
+                  className="text-purple-600"
+                />
+                <span>
+                  Queue upload (recommended) — worker processes files; poll progress by movie ID.
+                </span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="movieUploadMode"
+                  checked={movieUploadMode === 'immediate'}
+                  onChange={() => setMovieUploadMode('immediate')}
+                  className="text-purple-600"
+                />
+                <span>
+                  Immediate upload (legacy) — request holds until storage upload; poll by upload ID.
+                </span>
+              </label>
+            </div>
+          </div>
+
           {/* Basic Information */}
           <div className="space-y-5 bg-gray-50 p-5 rounded-lg border border-gray-200">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h3>
@@ -998,13 +1184,7 @@ export const MoviesList = () => {
                   label="Subtitle Language"
                   options={SUBTITLE_LANGUAGES.map((lang) => ({ value: lang.code, label: lang.name }))}
                   value={subtitleLanguage}
-                  onChange={(e) => {
-                    setSubtitleLanguage(e.target.value);
-                    const selectedLang = SUBTITLE_LANGUAGES.find((l) => l.code === e.target.value);
-                    if (selectedLang) {
-                      setSubtitleLanguageCode(selectedLang.code);
-                    }
-                  }}
+                  onChange={(e) => setSubtitleLanguage(e.target.value)}
                 />
               </div>
             </div>
@@ -1034,7 +1214,6 @@ export const MoviesList = () => {
                 setVideo(null);
                 setSubtitle(null);
                 setSubtitleLanguage('');
-                setSubtitleLanguageCode('');
                 setGenre([]);
                 setCast([]);
                 setTags([]);
@@ -1057,16 +1236,18 @@ export const MoviesList = () => {
       <Modal
         isOpen={isUploadProgressModalOpen}
         onClose={() => {
-          // Always allow closing - upload will continue in background
+          const stillGoing =
+            uploadProgress?.status === 'pending' ||
+            uploadProgress?.status === 'processing' ||
+            uploadProgress?.status === 'uploading';
           setIsUploadProgressModalOpen(false);
-          setUploadingMovieId(null);
+          setUploadCtx(null);
           setUploadProgress(null);
           if (progressIntervalRef.current) {
             clearInterval(progressIntervalRef.current);
             progressIntervalRef.current = null;
           }
-          // Show info message if still processing
-          if (uploadProgress?.status === 'pending' || uploadProgress?.status === 'processing') {
+          if (stillGoing) {
             showToast.success('Upload will continue in background. Check Upload Queues for progress.');
           }
         }}
@@ -1077,6 +1258,12 @@ export const MoviesList = () => {
           <div className="space-y-6">
             {/* Overall Progress */}
             <div>
+              {uploadProgress.uploadLimits && (
+                <p className="text-xs text-gray-500 mb-2">
+                  Video max {uploadProgress.uploadLimits.maxVideoFileSizeLabel} · Images max{' '}
+                  {uploadProgress.uploadLimits.maxImageFileSizeLabel}
+                </p>
+              )}
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Overall Progress</span>
                 <span className="text-sm font-semibold text-gray-900">{uploadProgress.overallProgress}%</span>
@@ -1107,11 +1294,17 @@ export const MoviesList = () => {
                       <span className="text-sm text-red-600 font-medium">Upload Failed</span>
                     </>
                   )}
-                  {(uploadProgress.status === 'processing' || uploadProgress.status === 'pending') && (
+                  {(uploadProgress.status === 'processing' ||
+                    uploadProgress.status === 'pending' ||
+                    uploadProgress.status === 'uploading') && (
                     <>
                       <ClockIcon className="h-5 w-5 text-blue-500 animate-spin" />
                       <span className="text-sm text-blue-600 font-medium capitalize">
-                        {uploadProgress.status === 'pending' ? 'Queued...' : 'Processing...'}
+                        {uploadProgress.status === 'pending'
+                          ? 'Queued...'
+                          : uploadProgress.status === 'uploading'
+                          ? 'Uploading...'
+                          : 'Processing...'}
                       </span>
                     </>
                   )}
@@ -1132,7 +1325,7 @@ export const MoviesList = () => {
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-3">File Upload Progress</h4>
               <div className="space-y-3">
-                {uploadProgress.jobs?.map((job: any, index: number) => (
+                {uploadProgress.jobs.map((job, index) => (
                   <div key={job._id || index} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2 flex-1">
@@ -1142,7 +1335,9 @@ export const MoviesList = () => {
                         {job.status === 'failed' && (
                           <XCircleIcon className="h-4 w-4 text-red-500 flex-shrink-0" />
                         )}
-                        {(job.status === 'processing' || job.status === 'pending') && (
+                        {(job.status === 'processing' ||
+                          job.status === 'pending' ||
+                          job.status === 'uploading') && (
                           <ClockIcon className="h-4 w-4 text-blue-500 animate-spin flex-shrink-0" />
                         )}
                         <span className="text-sm font-medium text-gray-900 truncate">{job.fileName}</span>
@@ -1152,7 +1347,7 @@ export const MoviesList = () => {
                       </div>
                       <div className="flex items-center gap-2 ml-2">
                         <span className="text-xs font-medium text-gray-600">{job.progress || 0}%</span>
-                        {job.status === 'failed' && (
+                        {uploadProgress.kind === 'queue' && job.status === 'failed' && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -1189,6 +1384,9 @@ export const MoviesList = () => {
                       </span>
                       <span className="text-xs text-gray-500 capitalize">{job.status}</span>
                     </div>
+                    {job.error ? (
+                      <p className="text-xs text-red-600 mt-1">{job.error}</p>
+                    ) : null}
                   </div>
                 ))}
                 {(!uploadProgress.jobs || uploadProgress.jobs.length === 0) && (
@@ -1201,7 +1399,9 @@ export const MoviesList = () => {
 
             {/* Close button - always show, but warn if still processing */}
             <div className="flex justify-end pt-4 border-t">
-              {(uploadProgress.status === 'pending' || uploadProgress.status === 'processing') && (
+              {(uploadProgress.status === 'pending' ||
+                uploadProgress.status === 'processing' ||
+                uploadProgress.status === 'uploading') && (
                 <div className="flex-1 mr-4">
                   <p className="text-sm text-amber-600">
                     ⚠️ Upload is still in progress. You can close this modal, but progress will continue in the background.
@@ -1210,21 +1410,34 @@ export const MoviesList = () => {
               )}
               <Button
                 onClick={() => {
+                  const stillGoing =
+                    uploadProgress.status === 'pending' ||
+                    uploadProgress.status === 'processing' ||
+                    uploadProgress.status === 'uploading';
                   setIsUploadProgressModalOpen(false);
-                  setUploadingMovieId(null);
+                  setUploadCtx(null);
                   setUploadProgress(null);
                   if (progressIntervalRef.current) {
                     clearInterval(progressIntervalRef.current);
                     progressIntervalRef.current = null;
                   }
-                  // Show info message if still processing
-                  if (uploadProgress.status === 'pending' || uploadProgress.status === 'processing') {
+                  if (stillGoing) {
                     showToast.success('Upload will continue in background. Check Upload Queues for progress.');
                   }
                 }}
-                variant={uploadProgress.status === 'pending' || uploadProgress.status === 'processing' ? 'outline' : 'primary'}
+                variant={
+                  uploadProgress.status === 'pending' ||
+                  uploadProgress.status === 'processing' ||
+                  uploadProgress.status === 'uploading'
+                    ? 'outline'
+                    : 'primary'
+                }
               >
-                {uploadProgress.status === 'pending' || uploadProgress.status === 'processing' ? 'Close (Continue in Background)' : 'Close'}
+                {uploadProgress.status === 'pending' ||
+                uploadProgress.status === 'processing' ||
+                uploadProgress.status === 'uploading'
+                  ? 'Close (Continue in Background)'
+                  : 'Close'}
               </Button>
             </div>
           </div>

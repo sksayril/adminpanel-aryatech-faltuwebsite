@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { moviesApi, CreateMovieData } from '@/api/movies.api';
 import { categoriesApi } from '@/api/categories.api';
-import { AGE_RESTRICTIONS } from '@/utils/constants';
+import { AGE_RESTRICTIONS, MOVIE_QUALITIES } from '@/utils/constants';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -26,6 +26,8 @@ const createMovieSchema = z.object({
   ReleaseDate: z.string().optional(),
   Director: z.string().optional(),
   TrailerUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  IsPremium: z.boolean().optional(),
+  sourceQuality: z.enum(['480p', '720p', '1080p']).optional(),
 });
 
 type CreateMovieFormData = z.infer<typeof createMovieSchema> & {
@@ -38,11 +40,7 @@ export const CreateMovie = () => {
   const navigate = useNavigate();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [poster, setPoster] = useState<File | null>(null);
-  const [videos] = useState<Array<{ file: File; quality: string }>>([]);
-  const [subtitles] = useState<Array<{ file: File; language: string; languageCode: string }>>([]);
-  const [blockedCountries] = useState<string[]>([]);
-  const [genre] = useState<string[]>([]);
-  const [cast] = useState<string[]>([]);
+  const [video, setVideo] = useState<File | null>(null);
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -52,15 +50,26 @@ export const CreateMovie = () => {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateMovieFormData>({
     resolver: zodResolver(createMovieSchema),
+    defaultValues: {
+      sourceQuality: '1080p',
+      IsPremium: false,
+    },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateMovieData) => moviesApi.create(data),
-    onSuccess: (data) => {
-      showToast.success(data.message || 'Movie created successfully!');
+    mutationFn: (data: CreateMovieData) => moviesApi.queueUpload(data),
+    onSuccess: (res) => {
+      showToast.success(res.message || 'Movie created and files queued for upload');
+      const id = res.data.movie?._id;
+      if (id) {
+        navigate(`/movies/${id}`);
+        return;
+      }
       navigate('/movies');
     },
     onError: (error: any) => {
@@ -69,8 +78,12 @@ export const CreateMovie = () => {
     },
   });
 
-
   const onSubmit = async (data: CreateMovieFormData) => {
+    if (video && !thumbnail) {
+      showToast.error('When uploading a video, a thumbnail is required in the same request');
+      return;
+    }
+
     const formData: CreateMovieData = {
       Title: data.Title,
       Category: data.Category,
@@ -82,16 +95,16 @@ export const CreateMovie = () => {
       AgeRestriction: data.AgeRestriction,
       ReleaseDate: data.ReleaseDate,
       Director: data.Director,
-      TrailerUrl: data.TrailerUrl,
-      Genre: genre.length > 0 ? genre : undefined,
-      Cast: cast.length > 0 ? cast : undefined,
-      BlockedCountries: blockedCountries.length > 0 ? blockedCountries : undefined,
+      TrailerUrl: data.TrailerUrl || undefined,
+      Year: data.Year,
+      Genre: data.Genre?.length ? data.Genre : undefined,
+      Cast: data.Cast?.length ? data.Cast : undefined,
+      BlockedCountries: data.BlockedCountries?.length ? data.BlockedCountries : undefined,
+      IsPremium: data.IsPremium ?? false,
+      sourceQuality: data.sourceQuality || '1080p',
       thumbnail: thumbnail || undefined,
       poster: poster || undefined,
-      video: videos.length > 0 ? videos[0]?.file : undefined,
-      subtitle: subtitles.length > 0 ? subtitles[0]?.file : undefined,
-      subtitleLanguages: subtitles.length > 0 ? subtitles.map(s => s.language) : undefined,
-      subtitleLanguageCodes: subtitles.length > 0 ? subtitles.map(s => s.languageCode) : undefined,
+      video: video || undefined,
     };
 
     createMutation.mutate(formData);
@@ -101,7 +114,10 @@ export const CreateMovie = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Upload New Movie</h1>
-        <p className="text-gray-600">Add a new movie to your platform</p>
+        <p className="text-gray-600">
+          Creates the movie via <code className="text-sm bg-gray-100 px-1 rounded">POST /api/admin/movies/queue-upload</code> using
+          your admin session token.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="card space-y-6">
@@ -136,6 +152,23 @@ export const CreateMovie = () => {
             ]}
             {...register('AgeRestriction')}
           />
+          <Select
+            label="Source quality (single video label)"
+            options={MOVIE_QUALITIES.map((q) => ({ value: q, label: q }))}
+            {...register('sourceQuality')}
+          />
+          <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+            <span className="text-sm font-medium text-gray-700">Premium movie</span>
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={watch('IsPremium') || false}
+                onChange={(e) => setValue('IsPremium', e.target.checked)}
+                className="rounded border-gray-300 text-purple-600"
+              />
+              IsPremium
+            </label>
+          </div>
           <Input
             label="Director"
             {...register('Director')}
@@ -169,7 +202,7 @@ export const CreateMovie = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FileUpload
-            label="Thumbnail"
+            label="Thumbnail (required if you add a video)"
             accept="image/*"
             maxSize={10}
             onChange={(files) => setThumbnail(files?.[0] || null)}
@@ -182,6 +215,14 @@ export const CreateMovie = () => {
             onChange={(files) => setPoster(files?.[0] || null)}
             preview={poster ? URL.createObjectURL(poster) : undefined}
           />
+          <div className="md:col-span-2">
+            <FileUpload
+              label="Video (optional for queue — max 5GB)"
+              accept="video/*"
+              maxSize={5120}
+              onChange={(files) => setVideo(files?.[0] || null)}
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-4">
@@ -189,11 +230,10 @@ export const CreateMovie = () => {
             Cancel
           </Button>
           <Button type="submit" isLoading={createMutation.isPending}>
-            Create Movie
+            Queue upload
           </Button>
         </div>
       </form>
     </div>
   );
 };
-

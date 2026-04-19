@@ -69,6 +69,16 @@ export interface Movie {
   };
   createdAt: string;
   updatedAt: string;
+  uploadId?: string;
+}
+
+export interface UploadLimits {
+  maxVideoFileSizeBytes: number;
+  maxThumbnailFileSizeBytes: number;
+  maxPosterFileSizeBytes: number;
+  maxSubtitleFileSizeBytes: number;
+  maxVideoFileSizeLabel: string;
+  maxImageFileSizeLabel: string;
 }
 
 export interface CreateMovieData {
@@ -82,6 +92,7 @@ export interface CreateMovieData {
   Channel?: string;
   AgeRestriction?: string;
   Director?: string;
+  Year?: number;
   ReleaseDate?: string;
   BlockedCountries?: string[];
   TrailerUrl?: string;
@@ -95,8 +106,12 @@ export interface CreateMovieData {
   sourceQuality?: string;
   thumbnail?: File;
   poster?: File;
-  video?: File; // Single video file for upload endpoint
-  subtitle?: File; // Single subtitle file
+  /** Single video (queue-upload, immediate upload, and simple create flows) */
+  video?: File;
+  /** Legacy multi-quality create (`POST /movies`) */
+  videos?: Array<{ file: File; quality: string }>;
+  subtitle?: File;
+  subtitles?: Array<{ file: File; language: string; languageCode: string }>;
   subtitleLanguages?: string[];
   subtitleLanguageCodes?: string[];
 }
@@ -110,6 +125,136 @@ export interface MoviesListResponse {
     total: number;
     pages: number;
   };
+}
+
+export interface QueueUploadJob {
+  _id: string;
+  fileType: string;
+  fileName: string;
+  status: string;
+  progress?: number;
+  uploadedSize?: number;
+  totalSize?: number;
+  error?: string | null;
+  s3Url?: string | null;
+}
+
+export interface QueueUploadResponseData {
+  movie: {
+    _id: string;
+    Title: string;
+    Slug: string;
+  };
+  queuedJobs: number;
+  jobs: QueueUploadJob[];
+  uploadProgressUrl?: string;
+  uploadLimits?: UploadLimits;
+}
+
+export interface LegacyUploadProgressFile {
+  uploadId: string;
+  fileName: string;
+  fileType: string;
+  totalSize: number;
+  uploadedSize: number;
+  progress: number;
+  status: string;
+  error: string | null;
+}
+
+function appendMovieFormFields(formData: FormData, data: CreateMovieData): void {
+  formData.append('Title', data.Title);
+  formData.append('Category', data.Category);
+
+  if (data.Description) formData.append('Description', data.Description);
+  if (data.SubCategory) formData.append('SubCategory', data.SubCategory);
+  if (data.SubSubCategory) formData.append('SubSubCategory', data.SubSubCategory);
+  if (data.Channel) formData.append('Channel', data.Channel);
+  if (data.MetaTitle) formData.append('MetaTitle', data.MetaTitle);
+  if (data.MetaDescription) formData.append('MetaDescription', data.MetaDescription);
+  if (data.MetaKeywords && data.MetaKeywords.length > 0) {
+    formData.append('MetaKeywords', JSON.stringify(data.MetaKeywords));
+  }
+  if (data.Tags && data.Tags.length > 0) {
+    formData.append('Tags', JSON.stringify(data.Tags));
+  }
+  if (data.AgeRestriction) formData.append('AgeRestriction', data.AgeRestriction);
+  if (data.Genre && data.Genre.length > 0) {
+    formData.append('Genre', JSON.stringify(data.Genre));
+  }
+  if (data.Cast && data.Cast.length > 0) {
+    formData.append('Cast', JSON.stringify(data.Cast));
+  }
+  if (data.Director) formData.append('Director', data.Director);
+  if (data.Year !== undefined && data.Year !== null) {
+    formData.append('Year', String(data.Year));
+  }
+  if (data.ReleaseDate) formData.append('ReleaseDate', data.ReleaseDate);
+  if (data.BlockedCountries && data.BlockedCountries.length > 0) {
+    formData.append('BlockedCountries', JSON.stringify(data.BlockedCountries));
+  }
+  if (data.TrailerUrl) formData.append('TrailerUrl', data.TrailerUrl);
+  if (data.IsPremium !== undefined) formData.append('IsPremium', data.IsPremium.toString());
+  if (data.sourceQuality) formData.append('sourceQuality', data.sourceQuality);
+  if (data.Country) formData.append('Country', data.Country);
+  if (data.Language) formData.append('Language', data.Language);
+
+  if (data.thumbnail) formData.append('thumbnail', data.thumbnail);
+  if (data.poster) formData.append('poster', data.poster);
+
+  if (data.videos && data.videos.length > 0) {
+    data.videos.forEach((v, index) => {
+      formData.append('video', v.file);
+      formData.append(`qualities[${index}]`, v.quality);
+    });
+  } else if (data.video) {
+    formData.append('video', data.video);
+  }
+
+  if (data.subtitles && data.subtitles.length > 0) {
+    data.subtitles.forEach((s, index) => {
+      formData.append('subtitle', s.file);
+      formData.append(`subtitleLanguages[${index}]`, s.language);
+      formData.append(`subtitleLanguageCodes[${index}]`, s.languageCode);
+    });
+  } else if (data.subtitle) {
+    formData.append('subtitle', data.subtitle);
+    if (data.subtitleLanguages && data.subtitleLanguages.length > 0) {
+      data.subtitleLanguages.forEach((lang, index) => {
+        formData.append(`subtitleLanguages[${index}]`, lang);
+      });
+    }
+    if (data.subtitleLanguageCodes && data.subtitleLanguageCodes.length > 0) {
+      data.subtitleLanguageCodes.forEach((code, index) => {
+        formData.append(`subtitleLanguageCodes[${index}]`, code);
+      });
+    }
+  }
+}
+
+function buildCreateMovieFormData(data: CreateMovieData): FormData {
+  const formData = new FormData();
+  appendMovieFormFields(formData, data);
+  return formData;
+}
+
+export interface MovieQueueUploadProgress {
+  movieId: string;
+  overallProgress: number;
+  status: string;
+  totalJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  jobs: QueueUploadJob[];
+  uploadLimits?: UploadLimits;
+}
+
+export interface MovieLegacyUploadProgress {
+  uploadId: string;
+  overallProgress: number;
+  status: string;
+  files: LegacyUploadProgressFile[];
+  uploadLimits?: UploadLimits;
 }
 
 export const moviesApi = {
@@ -136,130 +281,97 @@ export const moviesApi = {
     return response.data;
   },
 
-  create: async (data: CreateMovieData): Promise<{
+  /**
+   * Recommended: `POST /api/admin/movies/queue-upload`
+   */
+  queueUpload: async (
+    data: CreateMovieData
+  ): Promise<{
     success: boolean;
     message: string;
-    data: {
-      movie: {
-        _id: string;
-        Title: string;
-        Slug: string;
-      };
-      queuedJobs: number;
-      jobs: Array<{
-        _id: string;
-        fileType: string;
-        fileName: string;
-        status: string;
-      }>;
-    };
+    data: QueueUploadResponseData;
   }> => {
-    const formData = new FormData();
-    
-    // Required fields
-    formData.append('Title', data.Title);
-    formData.append('Category', data.Category);
-    
-    // Optional fields
-    if (data.Description) formData.append('Description', data.Description);
-    if (data.SubCategory) formData.append('SubCategory', data.SubCategory);
-    if (data.SubSubCategory) formData.append('SubSubCategory', data.SubSubCategory);
-    if (data.Channel) formData.append('Channel', data.Channel);
-    if (data.MetaTitle) formData.append('MetaTitle', data.MetaTitle);
-    if (data.MetaDescription) formData.append('MetaDescription', data.MetaDescription);
-    if (data.MetaKeywords && data.MetaKeywords.length > 0) {
-      formData.append('MetaKeywords', JSON.stringify(data.MetaKeywords));
-    }
-    if (data.Tags && data.Tags.length > 0) {
-      formData.append('Tags', JSON.stringify(data.Tags));
-    }
-    if (data.AgeRestriction) formData.append('AgeRestriction', data.AgeRestriction);
-    if (data.Genre && data.Genre.length > 0) {
-      formData.append('Genre', JSON.stringify(data.Genre));
-    }
-    if (data.Cast && data.Cast.length > 0) {
-      formData.append('Cast', JSON.stringify(data.Cast));
-    }
-    if (data.Director) formData.append('Director', data.Director);
-    if (data.ReleaseDate) formData.append('ReleaseDate', data.ReleaseDate);
-    if (data.BlockedCountries && data.BlockedCountries.length > 0) {
-      formData.append('BlockedCountries', JSON.stringify(data.BlockedCountries));
-    }
-    if (data.TrailerUrl) formData.append('TrailerUrl', data.TrailerUrl);
-    if (data.IsPremium !== undefined) formData.append('IsPremium', data.IsPremium.toString());
-    if (data.sourceQuality) formData.append('sourceQuality', data.sourceQuality);
-    
-    // File uploads
-    if (data.thumbnail) formData.append('thumbnail', data.thumbnail);
-    if (data.poster) formData.append('poster', data.poster);
-    if (data.video) formData.append('video', data.video);
-    
-    // Subtitles with arrays
-    if (data.subtitle) {
-      formData.append('subtitle', data.subtitle);
-      if (data.subtitleLanguages && data.subtitleLanguages.length > 0) {
-        data.subtitleLanguages.forEach((lang, index) => {
-          formData.append(`subtitleLanguages[${index}]`, lang);
-        });
-      }
-      if (data.subtitleLanguageCodes && data.subtitleLanguageCodes.length > 0) {
-        data.subtitleLanguageCodes.forEach((code, index) => {
-          formData.append(`subtitleLanguageCodes[${index}]`, code);
-        });
-      }
-    }
-
+    const formData = buildCreateMovieFormData(data);
     const response = await axiosInstance.post<{
       success: boolean;
       message: string;
-      data: {
-        movie: {
-          _id: string;
-          Title: string;
-          Slug: string;
-        };
-        queuedJobs: number;
-        jobs: Array<{
-          _id: string;
-          fileType: string;
-          fileName: string;
-          status: string;
-        }>;
-      };
-    }>(
-      '/movies/queue-upload',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      data: QueueUploadResponseData;
+    }>('/movies/queue-upload', formData);
+    return response.data;
+  },
+
+  /**
+   * @deprecated Use {@link moviesApi.queueUpload} — same endpoint; kept for existing imports.
+   */
+  create: async (
+    data: CreateMovieData
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: QueueUploadResponseData;
+  }> => {
+    return moviesApi.queueUpload(data);
+  },
+
+  /**
+   * Legacy synchronous create: `POST /api/admin/movies/upload`
+   */
+  uploadImmediate: async (
+    data: CreateMovieData
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: Movie;
+    upload?: {
+      uploadLimits?: UploadLimits;
+      progressUrl?: string;
+    };
+  }> => {
+    const formData = buildCreateMovieFormData(data);
+    const response = await axiosInstance.post<{
+      success: boolean;
+      message: string;
+      data: Movie;
+      upload?: { uploadLimits?: UploadLimits; progressUrl?: string };
+    }>('/movies/upload', formData);
+    return response.data;
+  },
+
+  /**
+   * Legacy multi-file create: `POST /api/admin/movies`
+   */
+  createWithMultipleFiles: async (
+    data: CreateMovieData
+  ): Promise<{ success: boolean; message: string; data: Movie }> => {
+    const formData = buildCreateMovieFormData(data);
+    const response = await axiosInstance.post<{ success: boolean; message: string; data: Movie }>(
+      '/movies',
+      formData
     );
     return response.data;
   },
 
-  getUploadProgress: async (movieId: string): Promise<{
+  getUploadProgress: async (
+    movieId: string
+  ): Promise<{
     success: boolean;
-    data: {
-      movieId: string;
-      overallProgress: number;
-      status: string;
-      totalJobs: number;
-      completedJobs: number;
-      failedJobs: number;
-      jobs: Array<{
-        _id: string;
-        fileType: string;
-        fileName: string;
-        progress: number;
-        status: string;
-        uploadedSize: number;
-        totalSize: number;
-        s3Url?: string;
-      }>;
-    };
+    data: MovieQueueUploadProgress;
   }> => {
-    const response = await axiosInstance.get(`/movies/${movieId}/upload-progress`);
+    const response = await axiosInstance.get<{ success: boolean; data: MovieQueueUploadProgress }>(
+      `/movies/${movieId}/upload-progress`
+    );
+    return response.data;
+  },
+
+  getLegacyUploadProgress: async (
+    uploadId: string
+  ): Promise<{
+    success: boolean;
+    data: MovieLegacyUploadProgress;
+  }> => {
+    const response = await axiosInstance.get<{ success: boolean; data: MovieLegacyUploadProgress }>(
+      `/movies/upload-progress/${uploadId}`
+    );
     return response.data;
   },
 
@@ -282,7 +394,7 @@ export const moviesApi = {
     data: Partial<CreateMovieData>
   ): Promise<{ success: boolean; message: string; data: Movie }> => {
     const formData = new FormData();
-    
+
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (key === 'thumbnail' || key === 'poster') {
@@ -290,20 +402,24 @@ export const moviesApi = {
             formData.append(key, value);
           }
         } else if (key === 'videos' && Array.isArray(value)) {
-          (value as unknown as Array<{ file: File; quality: string }>).forEach((video, index) => {
+          (value as Array<{ file: File; quality: string }>).forEach((video, index) => {
             formData.append('video', video.file);
             formData.append(`qualities[${index}]`, video.quality);
           });
         } else if (key === 'subtitles' && Array.isArray(value)) {
-          (value as unknown as Array<{ file: File; language: string; languageCode: string }>).forEach((subtitle, index) => {
-            formData.append('subtitle', subtitle.file);
-            formData.append(`subtitleLanguages[${index}]`, subtitle.language);
-            formData.append(`subtitleLanguageCodes[${index}]`, subtitle.languageCode);
-          });
+          (value as Array<{ file: File; language: string; languageCode: string }>).forEach(
+            (subtitle, index) => {
+              formData.append('subtitle', subtitle.file);
+              formData.append(`subtitleLanguages[${index}]`, subtitle.language);
+              formData.append(`subtitleLanguageCodes[${index}]`, subtitle.languageCode);
+            }
+          );
         } else if (Array.isArray(value)) {
           formData.append(key, JSON.stringify(value));
         } else if (typeof value === 'number' || typeof value === 'boolean') {
           formData.append(key, value.toString());
+        } else if (value instanceof File) {
+          formData.append(key, value);
         } else {
           formData.append(key, value as string);
         }
@@ -312,12 +428,7 @@ export const moviesApi = {
 
     const response = await axiosInstance.put<{ success: boolean; message: string; data: Movie }>(
       `/movies/${id}`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
     );
     return response.data;
   },
@@ -338,12 +449,7 @@ export const moviesApi = {
 
     const response = await axiosInstance.post<{ success: boolean; message: string; data: Movie }>(
       `/movies/${id}/video`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
     );
     return response.data;
   },
@@ -361,27 +467,30 @@ export const moviesApi = {
 
     const response = await axiosInstance.post<{ success: boolean; message: string; data: Movie }>(
       `/movies/${id}/subtitle`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
     );
     return response.data;
   },
 
-  toggleTrending: async (id: string): Promise<{ success: boolean; message: string; data: { _id: string; IsTrending: boolean } }> => {
-    const response = await axiosInstance.patch<{ success: boolean; message: string; data: { _id: string; IsTrending: boolean } }>(
-      `/movies/${id}/toggle-trending`
-    );
+  toggleTrending: async (
+    id: string
+  ): Promise<{ success: boolean; message: string; data: { _id: string; IsTrending: boolean } }> => {
+    const response = await axiosInstance.patch<{
+      success: boolean;
+      message: string;
+      data: { _id: string; IsTrending: boolean };
+    }>(`/movies/${id}/toggle-trending`);
     return response.data;
   },
 
-  toggleFeatured: async (id: string): Promise<{ success: boolean; message: string; data: { _id: string; IsFeatured: boolean } }> => {
-    const response = await axiosInstance.patch<{ success: boolean; message: string; data: { _id: string; IsFeatured: boolean } }>(
-      `/movies/${id}/toggle-featured`
-    );
+  toggleFeatured: async (
+    id: string
+  ): Promise<{ success: boolean; message: string; data: { _id: string; IsFeatured: boolean } }> => {
+    const response = await axiosInstance.patch<{
+      success: boolean;
+      message: string;
+      data: { _id: string; IsFeatured: boolean };
+    }>(`/movies/${id}/toggle-featured`);
     return response.data;
   },
 
@@ -419,4 +528,3 @@ export const moviesApi = {
     return response.data;
   },
 };
-
