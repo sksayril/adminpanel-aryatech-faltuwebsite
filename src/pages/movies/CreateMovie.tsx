@@ -217,9 +217,9 @@ export const CreateMovie = () => {
           />
           <div className="md:col-span-2">
             <FileUpload
-              label="Video (optional for queue — max 5GB)"
+              label="Video (optional for queue — max 100GB)"
               accept="video/*"
-              maxSize={5120}
+              maxSize={102400}
               onChange={(files) => setVideo(files?.[0] || null)}
             />
           </div>

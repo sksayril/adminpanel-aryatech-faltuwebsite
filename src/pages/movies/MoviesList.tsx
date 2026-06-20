@@ -1167,9 +1167,9 @@ export const MoviesList = () => {
               />
             </div>
             <FileUpload
-              label="Video File * (Max 5GB)"
+              label="Video File * (Max 100GB)"
               accept="video/*"
-              maxSize={5120}
+              maxSize={102400}
               onChange={(files) => setVideo(files?.[0] || null)}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
